@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["tsconfig.base.json"],
+  "globalEnv": ["NODE_ENV", "NEXT_TELEMETRY_DISABLED", "TURBO_TELEMETRY_DISABLED"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "public/service-worker.global.js"]
+    },
+    "typecheck": { "dependsOn": ["^typecheck"], "outputs": [] },
+    "@sazuz/web#typecheck": { "dependsOn": ["^typecheck"], "cache": false },
+    "dev": { "cache": false, "persistent": true, "passThroughEnv": ["SAZUZ_*"] }
+  }
+}

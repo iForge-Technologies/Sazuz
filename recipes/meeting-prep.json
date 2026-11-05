@@ -1,0 +1,50 @@
+{
+  "id": 3,
+  "slug": "meeting-prep",
+  "version": "1.0.0",
+  "title": "Meeting Prep",
+  "description": "Research attendees and relevant past messages, then prepare an agenda and briefing.",
+  "agent": "cos",
+  "assignments": [
+    {
+      "agent": "researcher",
+      "task": "Research attendee companies and relevant documents."
+    },
+    {
+      "agent": "comms",
+      "task": "Read relevant past email and calendar details."
+    },
+    {
+      "agent": "cos",
+      "task": "Produce the meeting brief and proposed agenda."
+    }
+  ],
+  "fields": [
+    {
+      "key": "meeting",
+      "label": "Meeting details",
+      "help": "Time, topic, attendees, companies and desired outcome.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "context",
+      "label": "Past threads and sources",
+      "help": "Configured account IDs, public links or background notes.",
+      "required": false,
+      "default": ""
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 9 * * 1-5",
+  "policy": "read_only",
+  "instructions": "Prepare a meeting brief from the supplied meeting details. Delegate attendee/company/document research to Researcher and relevant email/calendar reading to Comms. Produce a sourced attendee summary, agenda, questions and open decisions. Identify missing details. Do not contact attendees or edit the calendar.",
+  "prerequisites": [
+    "Configure Planner and Executor models.",
+    "Connect email/calendar accounts for past-message and event research, or supply meeting details."
+  ],
+  "approvalPoints": ["Read-only tools; no outgoing messages or calendar changes."],
+  "limitations": [
+    "Run on demand or at a reviewed fixed schedule. A trigger relative to each meeting's start time is not available yet."
+  ]
+}

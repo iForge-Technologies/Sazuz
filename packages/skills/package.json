@@ -1,0 +1,23 @@
+{
+  "name": "@sazuz/skills",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/llm": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": 8,
+  "slug": "dependency-security-patrol",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Dependency & Security Patrol",
+  "description": "Audit dependencies and prepare reviewed update pull requests.",
+  "agent": "coder",
+  "assignments": [
+    {
+      "agent": "coder",
+      "task": "Inspect supplied lockfiles and official advisory evidence, rank affected dependencies and propose the smallest compatible updates."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{lockfiles?, advisories?, repository?, headBranch?, baseBranch?}; scheduled runs use the configured project context.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 9 * * 1",
+  "policy": "review_changes",
+  "instructions": "Use lockfiles, package metadata and official security advisories. Record advisory IDs, affected/fixed versions, compatibility risk and test evidence. Any package audit, installation or generated code runs through code.run with the approved network policy. In apply mode open an update PR only on an existing authorized branch using github.create_pull_request or an explicitly granted official MCP operation. Do not silently force major upgrades.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Supply manifests/lockfiles, official advisory sources, an authorized repo and Docker for test execution."
+  ],
+  "approvalPoints": ["Audit/test sandbox actions and update PR creation follow policy approval."],
+  "limitations": [
+    "No host package installation or automatic branch push is provided. Unavailable audit network access and missing branches must be reported."
+  ],
+  "eventContract": "{lockfiles?, advisories?, repository?, headBranch?, baseBranch?}; scheduled runs use the configured project context."
+}

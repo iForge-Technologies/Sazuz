@@ -1,0 +1,37 @@
+{
+  "id": 24,
+  "slug": "weekly-review",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Weekly Review",
+  "description": "Summarize project work, real costs, wins and open loops for the week.",
+  "agent": "cos",
+  "assignments": [
+    {
+      "agent": "cos",
+      "task": "Use the bounded project activity record to summarize completed work, actual costs, wins and unresolved runs, clearly distinguishing reported outcomes from verified delivery."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{focus?}; the activity tool derives project scope from the claimed run.",
+      "required": false,
+      "default": "Focus on completed work, costs and open loops."
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 18 * * 0",
+  "policy": "read_only",
+  "instructions": "Use the deterministic project.activity input for the last seven days. Cite mission/run IDs, show actual model cost and open-loop counts, and explain any truncated list. Do not inspect another project or infer that a completed agent response proves an external delivery. Return a concise weekly review and prioritized owner decisions for Calm Mode.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Enable Chief of Staff and grant project.activity if the existing agent predates this tool."
+  ],
+  "approvalPoints": ["Read-only report; notifications use Calm Mode."],
+  "limitations": [
+    "The activity list is bounded to the 50 most recent runs; costs and open-loop counts cover the full selected interval within this project."
+  ],
+  "eventContract": "{focus?}; the activity tool derives project scope from the claimed run."
+}

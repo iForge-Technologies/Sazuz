@@ -1,0 +1,27 @@
+{
+  "name": "@sazuz/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "4.1.1",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/memory": "workspace:*",
+    "@sazuz/policy": "workspace:*",
+    "@sazuz/sandbox": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "undici": "8.12.3",
+    "zod": "4.6.7"
+  }
+}

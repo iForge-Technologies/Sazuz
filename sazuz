@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+compose=(docker compose --project-name sazuz --file "$root/deploy/compose.yaml")
+if [[ -f "$root/deploy/compose.release.yaml" ]]; then compose+=(--file "$root/deploy/compose.release.yaml"); fi
+if [[ -f "$root/data/compose.install.yaml" ]]; then compose+=(--file "$root/data/compose.install.yaml"); fi
+if [[ -f "$root/data/compose.release.yaml" ]]; then compose+=(--file "$root/data/compose.release.yaml"); fi
+if [[ "${1:-}" == backup || "${1:-}" == restore || "${1:-}" == update ]]; then
+  source "$root/deploy/host-ops.sh"
+  sazuz_operation "$@"
+  exit $?
+fi
+exec "${compose[@]}" exec server node /app/dist/cli.js "$@"

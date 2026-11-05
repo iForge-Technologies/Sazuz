@@ -1,0 +1,8 @@
+# Disposable browser-test stacks only: let the application reach the runner's HTTP model fixture.
+services:
+  server:
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  worker:
+    extra_hosts:
+      - host.docker.internal:host-gateway

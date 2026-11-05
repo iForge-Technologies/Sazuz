@@ -1,0 +1,37 @@
+{
+  "id": 12,
+  "slug": "subscription-auditor",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Subscription Auditor",
+  "description": "Find recurring charges and flag subscriptions needing review.",
+  "agent": "analyst",
+  "assignments": [
+    {
+      "agent": "analyst",
+      "task": "Read authorized statements or Stripe invoice data, group recurring merchant/currency/amount patterns and assess available usage evidence."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{statementRows?, usageEvidence?, accountId?}.",
+      "required": true,
+      "default": ""
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 10 1 * *",
+  "policy": "read_only",
+  "instructions": "Read supplied statements or stripe.invoices with a scoped read-only Stripe account. Identify recurrence, price changes and the next likely billing window while labeling estimates. Call a subscription unused only with actual usage evidence; otherwise suggest owner review. Produce a source-linked table and possible savings. Never cancel services or move money.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Provide statements or a read-only Stripe account. Usage evidence is needed to identify unused subscriptions."
+  ],
+  "approvalPoints": ["Read-only suggestions; no cancellation, purchase or payment action."],
+  "limitations": [
+    "Recurring charges may be irregular; uncertain patterns and missing usage data are explicitly labeled."
+  ],
+  "eventContract": "{statementRows?, usageEvidence?, accountId?}."
+}

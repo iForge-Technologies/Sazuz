@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "suite": "research",
+  "description": "Use recorded page/document observations to produce cited comparisons without live retrieval.",
+  "model_presets": ["balanced", "budget", "quality", "private"],
+  "cases": [
+    {
+      "id": "cited-release-note",
+      "task": "Read https://docs.example.test/release and summarize the stated latency change with a [1] citation.",
+      "tools": ["web.fetch", "web.search"],
+      "fixtures": [
+        {
+          "name": "web.fetch",
+          "args": {
+            "url": "https://docs.example.test/release"
+          },
+          "output": {
+            "url": "https://docs.example.test/release",
+            "status": 200,
+            "contentType": "text/plain",
+            "text": "Release 2 reduced median latency from 100 ms to 70 ms in the same benchmark."
+          }
+        }
+      ],
+      "fixtureTurns": [
+        {
+          "text": "Read the release note.",
+          "toolCalls": [
+            {
+              "id": "call-1",
+              "name": "web.fetch",
+              "args": {
+                "url": "https://docs.example.test/release"
+              }
+            }
+          ]
+        },
+        {
+          "text": "Median latency fell from 100 ms to 70 ms, a 30% reduction [1]. Source: https://docs.example.test/release.",
+          "toolCalls": []
+        }
+      ],
+      "expect": [
+        {
+          "tool_called": {
+            "name": "web.fetch"
+          }
+        },
+        {
+          "text_contains": "30%"
+        },
+        {
+          "text_contains": "[1]"
+        },
+        {
+          "no_effect": "spend"
+        }
+      ]
+    },
+    {
+      "id": "document-caveat",
+      "task": "Read benchmark.txt and report its measured result and sample-size limitation.",
+      "tools": ["files.read"],
+      "fixtures": [
+        {
+          "name": "files.read",
+          "args": {
+            "path": "benchmark.txt"
+          },
+          "output": {
+            "path": "benchmark.txt",
+            "content": "Five trials measured 70 ms median latency. The small sample does not establish production performance.",
+            "bytes": 108,
+            "truncated": false
+          }
+        }
+      ],
+      "fixtureTurns": [
+        {
+          "text": "Read the benchmark.",
+          "toolCalls": [
+            {
+              "id": "call-1",
+              "name": "files.read",
+              "args": {
+                "path": "benchmark.txt"
+              }
+            }
+          ]
+        },
+        {
+          "text": "Five trials measured 70 ms median latency. The small sample does not establish production performance.",
+          "toolCalls": []
+        }
+      ],
+      "expect": [
+        {
+          "tool_called": {
+            "name": "files.read"
+          }
+        },
+        {
+          "text_contains": "Five trials"
+        },
+        {
+          "text_contains": "small sample"
+        },
+        {
+          "no_effect": "send"
+        }
+      ]
+    }
+  ]
+}

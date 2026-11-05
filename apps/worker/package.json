@@ -1,0 +1,24 @@
+{
+  "name": "@sazuz/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/runtime": "workspace:*",
+    "@sazuz/llm": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/policy": "workspace:*",
+    "@sazuz/connectors": "workspace:*",
+    "@sazuz/channels": "workspace:*",
+    "@sazuz/triggers": "workspace:*",
+    "@sazuz/vault": "workspace:*"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@sazuz/browser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./protocol": "./src/protocol.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "@sazuz/sandbox": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7"
+  }
+}

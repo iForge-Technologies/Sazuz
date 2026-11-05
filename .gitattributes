@@ -1,0 +1,17 @@
+* text=auto eol=lf
+*.png binary
+*.zip binary
+
+# Local documentation and agent instructions are excluded even if an older
+# source tree still tracks them. Runtime SKILL.md files remain distributable.
+/*.md export-ignore
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd] export-ignore
+/docs export-ignore
+/docs/** export-ignore
+
+# Reviewed repository landing page and its assets ship with source archives.
+/README.md -export-ignore
+/docs -export-ignore
+/docs/reference.md -export-ignore
+/docs/screenshots -export-ignore
+/docs/screenshots/** -export-ignore

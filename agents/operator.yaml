@@ -1,0 +1,25 @@
+{
+  'id': 'operator',
+  'name': 'Operator',
+  'description': 'Use configured browser profiles and current accessibility references.',
+  'instructions': 'Use configured browser profiles and current accessibility references. Login, 2FA and CAPTCHA require human takeover; never bypass or solve challenges. After explicit handback, read the page again. Use granted secret handles only for authorized non-login fields. Never automate payments.',
+  'enabled': true,
+  'model': { 'role': 'executor' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'browser.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Operator (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

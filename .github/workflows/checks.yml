@@ -1,0 +1,192 @@
+name: Verified release checks
+
+on:
+  workflow_call:
+    inputs:
+      retain_images:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality and PostgreSQL integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.25.0
+          run_install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:coverage
+      - run: pnpm audit --audit-level low
+      - name: Audit the complete pinned local voice dependency set
+        run: |
+          python3 -m venv "$RUNNER_TEMP/voice-audit"
+          "$RUNNER_TEMP/voice-audit/bin/pip" install pip-audit==2.9.0
+          "$RUNNER_TEMP/voice-audit/bin/python" -m pip_audit --disable-pip --no-deps --require-hashes -r deploy/voice/requirements.lock
+      - run: pnpm test:integration
+      - name: Deterministic evaluation smoke and adversarial boundaries
+        run: |
+          pnpm sazuz eval run --suite all --preset balanced,budget --output .verification/evals/smoke
+          pnpm sazuz eval run --suite red-team --preset balanced,budget --output .verification/evals/red-team
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: evaluation-reports
+          path: |
+            .verification/evals/smoke/report.html
+            .verification/evals/smoke/report.json
+            .verification/evals/red-team/report.html
+            .verification/evals/red-team/report.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - run: pnpm build
+      - name: Build documentation when local sources are available
+        if: hashFiles('docs/index.md') != ''
+        run: pnpm docs:build
+
+  image:
+    name: Image (${{ matrix.arch }})
+    needs: quality
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      COMPOSE_FILE: deploy/compose.yaml:deploy/compose.e2e.yaml
+      COMPOSE_PROJECT_NAME: sazuz-ci
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          tags: sazuz/app:phase5
+          push: false
+          load: true
+          provenance: false
+          cache-from: type=gha,scope=app-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=app-${{ matrix.arch }}
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.25.0
+          run_install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.0
+          cache: pnpm
+      - name: Install browser test prerequisites
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm --filter @sazuz/bridge-cli build
+          pnpm --filter @sazuz/bridge-cli deploy --prod --legacy "$RUNNER_TEMP/sazuz-bridge"
+          pnpm install --frozen-lockfile
+      - name: Validate Compose and start with fresh volumes and zero user configuration
+        run: |
+          test ! -f .env
+          test ! -d data
+          docker compose config --quiet
+          docker compose --profile browser --profile voice build sandbox-python sandbox-node browser whisper piper
+          docker compose --profile browser --profile voice up --detach --wait --wait-timeout 180 --no-build
+      - name: Real Python and Node isolation, scoped egress, and proxy deadlines
+        run: docker compose exec -T worker node /app/dist/sandbox-acceptance.js --run
+      - name: Browser smoke test against the complete stack
+        env:
+          PLAYWRIGHT_MODEL_FIXTURE_HOST: host.docker.internal
+          PLAYWRIGHT_RESTORE_BASE_URL: http://127.0.0.1:7798
+        run: |
+          umask 077
+          mkdir -p "$RUNNER_TEMP/sazuz-e2e/secrets"
+          mkdir -p "$RUNNER_TEMP/sazuz-restore-e2e/secrets"
+          docker compose -p sazuz-restore-ci -f deploy/compose.yaml -f deploy/compose.restore-e2e.yaml up --detach --wait --wait-timeout 180 --no-build
+          docker compose exec -T server node -e 'process.stdout.write(require("node:fs").readFileSync("/data/secrets/setup-token"))' > "$RUNNER_TEMP/sazuz-e2e/secrets/setup-token"
+          docker compose -p sazuz-restore-ci -f deploy/compose.yaml -f deploy/compose.restore-e2e.yaml exec -T server node -e 'process.stdout.write(require("node:fs").readFileSync("/data/secrets/setup-token"))' > "$RUNNER_TEMP/sazuz-restore-e2e/secrets/setup-token"
+          PLAYWRIGHT_SETUP_DATA_DIR="$RUNNER_TEMP/sazuz-e2e" PLAYWRIGHT_RESTORE_DATA_DIR="$RUNNER_TEMP/sazuz-restore-e2e" PLAYWRIGHT_BRIDGE_ENTRY="$RUNNER_TEMP/sazuz-bridge/dist/main.js" pnpm test:e2e
+      - name: Frontend routes, responsive layouts and keyboard interactions
+        run: pnpm test:frontend
+      - name: Detect a stopped worker and recover
+        run: |
+          docker compose stop worker
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { setTimeout } from 'node:timers/promises';
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            const response = await fetch('http://127.0.0.1:7777/api/health');
+            if (response.status === 503) {
+              const health = await response.json();
+              assert.equal(health.services.database.status, 'ok');
+              assert.ok(['missing', 'stale'].includes(health.services.worker.status));
+              process.exit(0);
+            }
+            await setTimeout(500);
+          }
+          throw new Error('Health did not detect the stopped worker.');
+          JS
+          docker compose --profile browser --profile voice up --detach --wait --wait-timeout 90 --no-build
+      - name: Recreate services with the existing database and credential volumes
+        run: |
+          docker compose --profile browser --profile voice down --remove-orphans
+          docker compose --profile browser --profile voice up --detach --wait --wait-timeout 180 --no-build
+          curl --fail --silent --show-error http://127.0.0.1:7777/api/health
+      - name: Collect safe service diagnostics
+        if: always()
+        run: |
+          docker compose ps --all
+          docker compose logs --no-color --tail 100
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: browser-results-${{ matrix.arch }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Actual offline local speech and Python boundary tests
+        run: |
+          docker compose exec -T whisper python -m unittest -v test_service
+          docker compose exec -T server node /app/dist/voice-acceptance.js --run
+      - name: Retain the exact images that passed all checks
+        if: inputs.retain_images
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: pnpm release:images retain "$ARCH"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: inputs.retain_images
+        with:
+          name: tested-images-${{ matrix.arch }}
+          path: .verification/release/${{ matrix.arch }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 2
+      - name: Remove CI containers and volumes
+        if: always()
+        run: |
+          docker compose --profile browser --profile voice down --volumes --remove-orphans
+          docker compose -p sazuz-restore-ci -f deploy/compose.yaml -f deploy/compose.restore-e2e.yaml down --volumes --remove-orphans

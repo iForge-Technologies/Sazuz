@@ -1,0 +1,48 @@
+{
+  "id": 20,
+  "slug": "standup-writer",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Standup Writer",
+  "description": "Combine change, calendar and task evidence into a standup draft.",
+  "agent": "writer",
+  "assignments": [
+    {
+      "agent": "coder",
+      "task": "Summarize supplied commits and verified task changes, separating completed work from ongoing work."
+    },
+    {
+      "agent": "writer",
+      "task": "Combine the change summary with calendar and tasks into yesterday/today/blockers, with source links."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{commits?, taskChanges?, calendar?, channelAccountId?}.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 9 * * 1-5",
+  "policy": "review_changes",
+  "instructions": "Read supplied recent commits or an approved official MCP reader, plus scoped calendar.list and todoist.list where configured. Do not infer completed work from an unmerged branch or a calendar title alone. In apply mode post only the reviewed standup to a configured Slack/Discord account or official destination with Writer grants.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Supply commit evidence or an official reader and any task/calendar accounts. Posting needs an explicitly scoped channel."
+  ],
+  "approvalPoints": ["Posting to a team channel is approved for the exact destination and text."],
+  "limitations": [
+    "Native GitHub does not list commits; use the supplied change feed or a reviewed official MCP reader."
+  ],
+  "eventContract": "{commits?, taskChanges?, calendar?, channelAccountId?}."
+}

@@ -1,0 +1,48 @@
+{
+  "id": 11,
+  "slug": "receipt-invoice-extractor",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Receipt & Invoice Extractor",
+  "description": "Extract attachment evidence into spreadsheet rows and a monthly expense report.",
+  "agent": "analyst",
+  "assignments": [
+    {
+      "agent": "analyst",
+      "task": "Read the provided receipt/invoice text or approved document source and extract vendor, date, currency, subtotal, tax, total and source IDs."
+    },
+    {
+      "agent": "analyst",
+      "task": "Validate arithmetic, flag duplicates and uncertainty, and prepare spreadsheet rows plus a monthly currency-separated expense report."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{messageId, attachments?:[{name,text,sourceId}], invoiceText?, month?}; provide extracted text or an ingested private document reference.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    }
+  ],
+  "modes": ["manual", "imap", "cron"],
+  "defaultCron": "0 9 1 * *",
+  "policy": "review_changes",
+  "instructions": "Extract only evidence-backed values from supplied attachments or ingested documents. Never invent unreadable amounts; flag OCR uncertainty. Keep currencies separate, reconcile totals and deduplicate by source ID/invoice number. In apply mode use sheets.write only for the configured destination range, with exact rows reviewed; optionally write the report through files.write. Do not move money.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Attachments must be supplied as text, a supported workspace file or ingested KB document. Sheets writes need a scoped Sheets account and Analyst grants."
+  ],
+  "approvalPoints": ["Spreadsheet/file writes follow policy; no payment action is permitted."],
+  "limitations": [
+    "The email trigger does not automatically ingest binary attachments. Configure the document ingress first; extraction never implies a payment."
+  ],
+  "eventContract": "{messageId, attachments?:[{name,text,sourceId}], invoiceText?, month?}; provide extracted text or an ingested private document reference."
+}

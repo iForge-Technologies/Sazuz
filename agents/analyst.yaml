@@ -1,0 +1,26 @@
+{
+  'id': 'analyst',
+  'name': 'Analyst',
+  'description': 'Analyze project data with the hardened Python or Node sandbox.',
+  'instructions': 'Analyze project data with the hardened Python or Node sandbox. Cite inputs and assumptions. Network is off by default. Never embed credentials in code.',
+  'enabled': true,
+  'model': { 'role': 'executor' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'files.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+      'sandbox.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Analyst (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

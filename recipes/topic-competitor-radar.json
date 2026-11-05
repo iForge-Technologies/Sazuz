@@ -1,0 +1,41 @@
+{
+  "id": 15,
+  "slug": "topic-competitor-radar",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Topic / Competitor Radar",
+  "description": "Collect topic evidence and turn the accumulated sources into a weekly digest.",
+  "agent": "writer",
+  "assignments": [
+    {
+      "agent": "researcher",
+      "task": "Read supplied feed items, changelogs and configured public sources; deduplicate by URL/version and explain relevance."
+    },
+    {
+      "agent": "writer",
+      "task": "Write a concise weekly digest with dated citations, separating observed changes from interpretation."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{items?:[{url,title,publishedAt,text}], window?}; install an RSS collection variant and a weekly cron variant when both are wanted.",
+      "required": true,
+      "default": ""
+    }
+  ],
+  "modes": ["manual", "cron", "rss"],
+  "defaultCron": "0 18 * * 0",
+  "policy": "read_only",
+  "instructions": "Collect only from supplied public sources, RSS items or official APIs. Keep publication dates and source URLs. Distinguish a daily collection from a weekly synthesis according to owner context. Weekly synthesis can read previously saved project memories/KB or supplied collected items; do not fabricate missing historical collections. Return the digest for Calm Mode.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Provide source URLs/feed and scope. Weekly aggregation needs retained project evidence or supplied collected items."
+  ],
+  "approvalPoints": ["Read-only collection and draft digest; delivery obeys Calm Mode."],
+  "limitations": [
+    "Each installed graph has one trigger. Install collection and synthesis variants to use separate daily/RSS and weekly schedules."
+  ],
+  "eventContract": "{items?:[{url,title,publishedAt,text}], window?}; install an RSS collection variant and a weekly cron variant when both are wanted."
+}

@@ -1,0 +1,28 @@
+{
+  'id': 'coder',
+  'name': 'Coder',
+  'description': 'Inspect issues, prepare code and use the hardened sandbox.',
+  'instructions': 'Inspect issues, prepare code and use the hardened sandbox. Use official GitHub tools for proposed pull requests. Never push to the default branch or put credentials into code. Network requires configured domains and approval.',
+  'enabled': true,
+  'model': { 'role': 'planner' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'web.*',
+      'time.*',
+      'files.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+      'github.*',
+      'sandbox.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Coder (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

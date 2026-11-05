@@ -1,0 +1,44 @@
+{
+  "id": 7,
+  "slug": "ci-failure-doctor",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "CI Failure Doctor",
+  "description": "Diagnose failed CI logs and propose a tested fix and draft pull request.",
+  "agent": "coder",
+  "assignments": [
+    {
+      "agent": "coder",
+      "task": "Read failure logs and changed code, isolate the cause, and propose a minimal patch and verification commands."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{repository, runUrl, commitSha, logs, changedFiles?, headBranch?, baseBranch?}.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    }
+  ],
+  "modes": ["manual", "webhook"],
+  "defaultCron": "",
+  "policy": "review_changes",
+  "instructions": "Use supplied CI logs and repository evidence or explicitly granted official MCP readers. Cite the failing command and relevant lines; distinguish test failures from infrastructure faults. Run generated tests or patches only with code.run in the hardened Docker sandbox and policy approval. In apply mode github.create_pull_request can open a draft only between existing named branches. Never claim a branch was pushed or tests passed without executed evidence.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Provide CI logs and code, a GitHub account scoped to the repo, and an existing fix branch (or an approved official MCP branch operation)."
+  ],
+  "approvalPoints": ["Sandbox execution and opening the fix PR require policy approval."],
+  "limitations": [
+    "Native GitHub does not download CI logs or push branches. Missing branch/log access is reported as a prerequisite."
+  ],
+  "eventContract": "{repository, runUrl, commitSha, logs, changedFiles?, headBranch?, baseBranch?}."
+}

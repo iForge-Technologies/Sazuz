@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["scripts/**/*.ts", "tests/**/*.ts", "*.config.ts", "deploy/*.mjs"]
+}

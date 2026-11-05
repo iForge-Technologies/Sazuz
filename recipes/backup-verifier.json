@@ -1,0 +1,67 @@
+{
+  "id": 23,
+  "slug": "backup-verifier",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Backup Verifier",
+  "description": "Check backup evidence and optionally run a pinned sample restore test.",
+  "agent": "operator",
+  "assignments": [
+    {
+      "agent": "monitor",
+      "task": "Inspect scoped backup files/evidence for expected names, freshness, sizes and checksums; distinguish metadata checks from an actual restore test."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{manifest?, expectedFiles?, maximumAgeHours?, checksums?}.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "deviceId",
+      "label": "Paired Bridge device ID",
+      "help": "Select the paired device ID shown in Bridge. This is an identifier, not a credential.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "folder",
+      "label": "Approved folder alias",
+      "help": "The folder alias on both the laptop and its reviewed server grant.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    },
+    {
+      "key": "restoreCommand",
+      "label": "Fixed restore-test command alias",
+      "help": "Required only in apply mode. Configure and pin an isolated sample restore test in Bridge; no arguments or code can be supplied here.",
+      "required": false,
+      "default": ""
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 10 * * 0",
+  "policy": "review_changes",
+  "instructions": "Check the selected existing backup inventory and supplied manifest/checksum evidence with permitted Bridge reads. Report missing or stale backups and missing checksum evidence. Do not claim recoverability from file presence alone. Apply mode calls only the explicitly pinned fixed restore-test command alias after human review. Its result must identify the isolated test location and validation outcome; never overwrite live data or create/restore production backups.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Pair an existing backup folder with Monitor read grants. Optional restore testing needs a pinned local.exec alias, Operator grant and an isolated non-production test destination."
+  ],
+  "approvalPoints": [
+    "The fixed restore-test command always asks through Bridge and the Policy Engine."
+  ],
+  "limitations": [
+    "This recipe verifies an existing backup system. Sazuz backup creation/production restore is a later operations feature; no arbitrary restore command or host-generated script is accepted."
+  ],
+  "eventContract": "{manifest?, expectedFiles?, maximumAgeHours?, checksums?}."
+}

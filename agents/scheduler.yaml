@@ -1,0 +1,25 @@
+{
+  'id': 'scheduler',
+  'name': 'Scheduler',
+  'description': 'Coordinate calendar events within the assigned account and task.',
+  'instructions': 'Coordinate calendar events within the assigned account and task. Creating, moving and deleting events requires policy approval.',
+  'enabled': true,
+  'model': { 'role': 'fast' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'calendar.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Scheduler (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

@@ -1,0 +1,21 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  cpu-features: false
+  esbuild: true
+  protobufjs: false
+  sharp: true
+  ssh2: false
+  unrs-resolver: true
+
+minimumReleaseAge: 0
+
+strictPeerDependencies: true
+verifyDepsBeforeRun: error
+
+overrides:
+  '@esbuild-kit/core-utils>esbuild': 0.25.12
+  'glob@>=9.0.0 <=14.0.1': 14.0.3
+  'minimatch@>=9.0.0 <11.0.1': 11.0.4

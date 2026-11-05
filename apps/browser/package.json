@@ -1,0 +1,29 @@
+{
+  "name": "@sazuz/browser-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/browser": "workspace:*",
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "@sazuz/sandbox": "workspace:*",
+    "@fastify/websocket": "11.3.6",
+    "fastify": "5.12.8",
+    "drizzle-orm": "0.45.4",
+    "playwright": "1.64.1",
+    "zod": "4.6.7",
+    "pino": "10.4.0"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.1"
+  }
+}

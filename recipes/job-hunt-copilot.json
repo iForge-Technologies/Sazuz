@@ -1,0 +1,45 @@
+{
+  "id": 5,
+  "slug": "job-hunt-copilot",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Job Hunt Copilot",
+  "description": "Collect listings, score fit, draft cover letters, maintain a draft tracker and prepare for interviews.",
+  "agent": "analyst",
+  "assignments": [
+    {
+      "agent": "researcher",
+      "task": "Collect current listings from the owner's feed URLs or official APIs and score them against the supplied profile with evidence."
+    },
+    {
+      "agent": "writer",
+      "task": "Draft tailored cover letters and interview preparation using only verified profile facts."
+    },
+    {
+      "agent": "analyst",
+      "task": "Produce a deduplicated application-tracker table with source links, fit scores, stage and next steps."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{listings?, profile?, interviewEmail?}; RSS and IMAP triggers supply their ordinary item/message payload.",
+      "required": true,
+      "default": ""
+    }
+  ],
+  "modes": ["manual", "cron", "rss", "imap"],
+  "defaultCron": "0 8 * * *",
+  "policy": "read_only",
+  "instructions": "Read supplied RSS items, official listing APIs, permitted public pages or incoming interview messages. Preserve listing dates, links and status; distinguish expired listings and missing evidence. Never invent qualifications or submit applications. Keep cover letters, application-tracker rows and interview preparation in the workflow result for owner use.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Provide a truthful candidate profile and permitted listing sources; an interview inbox needs an IMAP account."
+  ],
+  "approvalPoints": ["Applications are never submitted by this template. All results are drafts."],
+  "limitations": [
+    "The default search tool is Wikipedia, not a job index; supply actual feeds, URLs or a reviewed official MCP job API. Tracker changes are returned as a draft table."
+  ],
+  "eventContract": "{listings?, profile?, interviewEmail?}; RSS and IMAP triggers supply their ordinary item/message payload."
+}

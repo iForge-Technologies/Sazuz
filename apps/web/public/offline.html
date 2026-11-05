@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Sazuz is offline</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --background: #f7f7f2;
+        --foreground: #222921;
+        --muted: #6b7269;
+        --border: #dedfd7;
+        --accent: #2d5140;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font:
+          14px/1.7 system-ui,
+          sans-serif;
+        color: var(--foreground);
+        background: var(--background);
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        align-content: center;
+        padding: 32px 24px;
+      }
+      main {
+        width: 100%;
+        max-width: 440px;
+        margin: auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: -1px;
+      }
+      img {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 56px 0 10px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .status::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: #ab8150;
+        border-radius: 50%;
+      }
+      h1 {
+        font-size: 34px;
+        line-height: 1.2;
+        font-weight: 600;
+        letter-spacing: -1.4px;
+        margin: 8px 0 18px;
+      }
+      p {
+        color: var(--muted);
+      }
+      a {
+        color: inherit;
+      }
+      .retry {
+        display: inline-flex;
+        margin-top: 18px;
+        padding: 9px 18px;
+        border-radius: 5px;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+      }
+      footer {
+        margin-top: 56px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #191d19;
+          --foreground: #e6e9e0;
+          --muted: #a4ad9f;
+          --border: #333b31;
+          --accent: #42735a;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand"><img src="/pwa-192.png" alt="" />Sazuz</div>
+      <div class="status">Connection unavailable</div>
+      <h1>Sazuz is offline</h1>
+      <p>
+        Connect to your Sazuz host to open the workspace. Tasks and messages are available when the
+        connection returns.
+      </p>
+      <a class="retry" href="/chat">Try again <span aria-hidden="true">&nbsp;↗</span></a>
+      <footer>Your Sazuz workspace</footer>
+    </main>
+  </body>
+</html>

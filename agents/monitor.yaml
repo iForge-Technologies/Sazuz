@@ -1,0 +1,25 @@
+{
+  'id': 'monitor',
+  'name': 'Monitor',
+  'description': 'Read public sources and check status.',
+  'instructions': 'Read public sources and check status. Report observations and uncertainty. Do not change remote systems.',
+  'enabled': true,
+  'model': { 'role': 'fast' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'web.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Monitor (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

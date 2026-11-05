@@ -1,0 +1,5 @@
+# Docker Compose 2.24.4+ is required for include and the development override.
+name: sazuz
+
+include:
+  - path: ./deploy/compose.yaml

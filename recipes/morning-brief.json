@@ -1,0 +1,61 @@
+{
+  "id": 1,
+  "slug": "morning-brief",
+  "version": "1.0.0",
+  "title": "Morning Brief",
+  "description": "A concise calendar, inbox, task, weather and news brief, delivered through your notification preferences.",
+  "agent": "cos",
+  "assignments": [
+    {
+      "agent": "comms",
+      "task": "Read important email and calendar items."
+    },
+    {
+      "agent": "researcher",
+      "task": "Check public weather/news sources and relevant project knowledge."
+    },
+    {
+      "agent": "cos",
+      "task": "Combine findings into a concise, sourced brief."
+    }
+  ],
+  "fields": [
+    {
+      "key": "focus",
+      "label": "What matters today",
+      "help": "Priorities, task notes or topics to include.",
+      "required": true,
+      "default": "Upcoming meetings, important email and today's priorities."
+    },
+    {
+      "key": "location",
+      "label": "Weather location",
+      "help": "Optional city or region.",
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "sources",
+      "label": "Sources and accounts",
+      "help": "Optional public news URLs and configured email/calendar account IDs. Add accounts in Settings.",
+      "required": false,
+      "default": ""
+    }
+  ],
+  "modes": ["cron", "manual"],
+  "defaultCron": "0 8 * * 1-5",
+  "policy": "read_only",
+  "instructions": "Prepare today's Morning Brief. Ask Comms to read relevant email/calendar accounts and Researcher to check public weather/news and project task notes. Use only available sources; clearly identify missing accounts or data. CoS combines the results with source links. Return the brief as the mission result so the existing notification router can include it in the digest. Do not send separate messages or change external records.",
+  "prerequisites": [
+    "Configure the Planner and Executor model roles.",
+    "Connect email/calendar accounts in Settings for those sections; public web reads need no account.",
+    "Choose digest and quiet-hour preferences in Settings."
+  ],
+  "approvalPoints": [
+    "Read-only tools; the Policy Engine rejects write, send, delete, spend and publish effects."
+  ],
+  "limitations": [
+    "Task information comes from supplied notes or project knowledge.",
+    "This compatible mission template uses Comms and Researcher; a custom workflow can add the available Scheduler."
+  ]
+}

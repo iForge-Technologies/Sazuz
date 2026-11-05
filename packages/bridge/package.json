@@ -1,0 +1,27 @@
+{
+  "name": "@sazuz/bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./local": "./src/local.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/mcp": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "ws": "8.22.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.1"
+  }
+}

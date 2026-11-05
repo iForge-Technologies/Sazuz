@@ -1,0 +1,18 @@
+{
+  "name": "@sazuz/channels",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/core": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "web-push": "3.6.7",
+    "zod": "4.6.7"
+  }
+}

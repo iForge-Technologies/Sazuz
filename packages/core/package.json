@@ -1,0 +1,47 @@
+{
+  "name": "@sazuz/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./health": "./src/health.ts",
+    "./work": "./src/work.ts",
+    "./replay": "./src/replay.ts",
+    "./observability": "./src/observability.ts",
+    "./audit": "./src/audit.ts",
+    "./audit-verify": "./src/audit-verify.ts",
+    "./operations": "./src/operations.ts",
+    "./voice": "./src/voice.ts",
+    "./push": "./src/push.ts",
+    "./evals": "./src/evals.ts",
+    "./missions": "./src/missions.ts",
+    "./memory": "./src/memory.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./skills": "./src/skills.ts",
+    "./style": "./src/style.ts",
+    "./proposals": "./src/proposals.ts",
+    "./recipes": "./src/recipes.ts",
+    "./sandbox": "./src/sandbox.ts",
+    "./browser": "./src/browser.ts",
+    "./agents": "./src/agents.ts",
+    "./graphs": "./src/graphs.ts",
+    "./reviews": "./src/reviews.ts",
+    "./connectors": "./src/connectors.ts",
+    "./mcp": "./src/mcp.ts",
+    "./bridge": "./src/bridge.ts",
+    "./workflows": "./src/workflows.ts",
+    "./calm": "./src/calm.ts",
+    "./learning": "./src/learning.ts",
+    "./learning-replay": "./src/learning-replay.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/vault": "workspace:*",
+    "pino": "10.4.0",
+    "ulid": "3.0.2",
+    "zod": "4.6.7"
+  }
+}

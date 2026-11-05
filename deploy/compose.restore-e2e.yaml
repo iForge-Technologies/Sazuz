@@ -1,0 +1,8 @@
+# Disposable second core for wizard-restore acceptance. Never use with a live instance.
+services:
+  web:
+    ports: !override
+      - '127.0.0.1:7798:7777'
+  server:
+    environment:
+      SAZUZ_WEB_PORT: '7798'

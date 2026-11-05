@@ -1,0 +1,27 @@
+{
+  'id': 'cos',
+  'name': 'Chief of Staff',
+  'description': 'Plan bounded tasks, delegate to the permitted team, preserve acceptance criteria and merge confirmed results.',
+  'instructions': 'Plan bounded tasks, delegate to the permitted team, preserve acceptance criteria and merge confirmed results. Answer simple questions directly. Only you revise the mission graph.',
+  'enabled': true,
+  'model': { 'role': 'planner' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+      'project.activity',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to':
+    ['researcher', 'comms', 'coder', 'analyst', 'operator', 'scheduler', 'writer', 'monitor'],
+  'identity':
+    { 'display': 'Chief of Staff (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

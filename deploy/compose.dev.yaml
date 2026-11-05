@@ -1,0 +1,35 @@
+# Requires Docker Compose 2.24.4+. pnpm dev creates ../data/secrets/db-password
+# on the host first, so this starts PostgreSQL without building an app image.
+services:
+  postgres:
+    depends_on: !reset {}
+    environment:
+      POSTGRES_DB: ${SAZUZ_DATABASE_NAME:-sazuz}
+      POSTGRES_USER: ${SAZUZ_DATABASE_USER:-sazuz}
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - --host=127.0.0.1
+        - --username=${SAZUZ_DATABASE_USER:-sazuz}
+        - --dbname=${SAZUZ_DATABASE_NAME:-sazuz}
+    ports:
+      - target: 5432
+        published: '${SAZUZ_DATABASE_PORT:-54329}'
+        host_ip: '${SAZUZ_DATABASE_HOST:-127.0.0.1}'
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: ${SAZUZ_DATA_DIR:-../data}
+        target: /run/sazuz
+        read_only: true
+        bind:
+          create_host_path: false
+
+  bootstrap:
+    volumes:
+      - type: bind
+        source: ${SAZUZ_DATA_DIR:-../data}
+        target: /data
+        bind:
+          create_host_path: false

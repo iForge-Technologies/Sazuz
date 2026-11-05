@@ -1,0 +1,21 @@
+{
+  "name": "@sazuz/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./private-files": "./src/private-files.ts",
+    ".": "./src/index.ts",
+    "./settings": "./src/settings.ts",
+    "./contracts": "./src/contracts.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/core": "workspace:*",
+    "@sazuz/policy": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

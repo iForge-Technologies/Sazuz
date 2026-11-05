@@ -1,0 +1,27 @@
+{
+  "name": "@sazuz/bridge-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "sazuz-bridge": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@sazuz/bridge": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "@sazuz/config": "workspace:*",
+    "libsodium-wrappers-sumo": "0.8.4",
+    "ulid": "3.0.2",
+    "ws": "8.22.1",
+    "zod": "4.6.7"
+  }
+}

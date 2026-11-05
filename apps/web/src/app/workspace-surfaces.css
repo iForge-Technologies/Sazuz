@@ -1,0 +1,724 @@
+/* Operational workspaces: records, evidence, editors and scoped configuration. */
+.workspace-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: -4px 0 28px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.workspace-section-nav a {
+  padding: 8px 0;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  text-underline-offset: 7px;
+}
+.workspace-section-nav a:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+.workspace-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.workspace-loading-mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.operation-section {
+  scroll-margin-top: 100px;
+}
+.operation-section.durable-card,
+.operation-section.setup-card {
+  padding: 28px 0;
+  margin: 0 0 20px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.operation-section .work-form,
+.operation-section > form {
+  display: grid;
+  gap: 16px;
+}
+.operation-section .work-form > .setup-field,
+.operation-section > form > .setup-field {
+  margin: 0;
+}
+.operation-section > h2 + p {
+  margin: 10px 0 20px;
+}
+.operation-section > form + button,
+.operation-section > ul:empty + button {
+  margin-top: 16px;
+}
+.operation-section > button + p,
+.operation-section > form + p {
+  margin-top: 14px;
+}
+.operation-section details > .setup-field {
+  margin-block: 16px;
+}
+.operation-section > .work-heading {
+  align-items: center;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+.operation-section > .work-heading > h2 {
+  margin: 0;
+}
+.operation-section > .work-heading > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.operation-section > h2,
+.operation-section > header h2 {
+  font-size: 18px;
+  letter-spacing: -0.035em;
+}
+.operation-section > p {
+  max-width: 78ch;
+}
+.operation-records {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+.operation-records > li {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.operation-records > li > p {
+  margin: 7px 0 0;
+  color: var(--muted-foreground);
+}
+.operation-records .knowledge-actions {
+  margin-bottom: 0;
+}
+.operation-filter {
+  max-width: 360px;
+  margin-bottom: 24px;
+}
+.operation-section.operation-summary {
+  border-top: 2px solid var(--primary);
+}
+.operation-summary > h2 {
+  font-size: clamp(24px, 3vw, 34px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.operation-summary > p:first-of-type {
+  color: var(--muted-foreground);
+}
+.operation-danger {
+  color: var(--danger) !important;
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border)) !important;
+}
+.operation-danger:hover:not(:disabled) {
+  background: var(--danger-soft) !important;
+}
+.operation-help {
+  margin: 14px 0;
+  border-left: 2px solid var(--border);
+  padding-left: 16px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.agent-team {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  margin: 0 0 30px;
+  border-bottom: 1px solid var(--border);
+}
+.agent-team a {
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 3px 14px;
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 18px 12px;
+  transition: background-color 140ms ease;
+}
+.agent-team a:hover,
+.agent-team a[aria-current='page'] {
+  background: var(--muted);
+}
+.agent-team a[aria-current='page'] {
+  outline: 0;
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+.agent-team a strong {
+  font-size: 14px;
+}
+.agent-team a > span:not(.agent-monogram),
+.agent-team a > small {
+  grid-column: 2;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.agent-team .agent-monogram {
+  grid-row: 1 / 4;
+  display: grid;
+  width: 36px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--primary);
+  font-size: 17px;
+  font-weight: 600;
+}
+.agent-editor > .work-heading {
+  margin-bottom: 18px;
+}
+.agent-editor .inline-actions,
+.workflow-mode-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: fit-content;
+  padding: 4px;
+  background: var(--muted);
+  border-radius: 7px;
+}
+.agent-editor .inline-actions button {
+  border-color: transparent;
+}
+.agent-editor .inline-actions button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+.agent-editor fieldset {
+  border-color: var(--border);
+  border-radius: 6px;
+  padding: 20px;
+}
+.agent-editor > form > fieldset {
+  border: 0;
+  padding: 8px 0 0;
+}
+.agent-editor label:not(.setup-check) {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.agent-editor label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--foreground);
+}
+.agent-yaml,
+.workflow-editor textarea[spellcheck='false'],
+.skill-source-editor {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  tab-size: 2;
+}
+.workflow-catalogue {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.workflow-catalogue a.durable-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(200px, 1.2fr);
+  gap: 6px 28px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin: 0;
+  padding: 20px 12px;
+  background: transparent;
+  transition: background-color 140ms ease;
+}
+.workflow-catalogue a:hover {
+  background: var(--muted);
+}
+.workflow-catalogue h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.workflow-catalogue p {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+.workflow-catalogue span {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.workflow-diagram,
+.mission-diagram {
+  border-radius: 8px;
+  background: var(--muted);
+}
+.workflow-diagram .react-flow,
+.mission-diagram .react-flow {
+  --xy-node-background-color: var(--card);
+  --xy-node-color: var(--foreground);
+  --xy-node-border: 1px solid var(--border);
+  --xy-edge-stroke: var(--muted-foreground);
+  --xy-edge-stroke-selected: var(--primary);
+  --xy-handle-background-color: var(--primary);
+  --xy-handle-border-color: var(--card);
+  --xy-attribution-background-color: var(--muted);
+  --xy-controls-button-background-color: var(--card);
+  --xy-controls-button-color: var(--foreground);
+}
+.workflow-diagram .react-flow__node.workflow-node,
+.mission-diagram .react-flow__node.mission-node {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  background: var(--card);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 4%);
+}
+.workflow-diagram .workflow-node.selected,
+.mission-diagram .mission-node-selected {
+  border-color: var(--primary);
+  outline-color: var(--primary);
+}
+.workflow-diagram .react-flow__attribution,
+.mission-diagram .react-flow__attribution {
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+.workflow-diagram .react-flow__controls button,
+.mission-diagram .react-flow__controls button {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 7px;
+  color: var(--foreground);
+  background: var(--card);
+  border-color: var(--border);
+}
+.workflow-diagram .react-flow__controls button svg,
+.mission-diagram .react-flow__controls button svg {
+  fill: currentColor;
+}
+.workflow-edit-grid {
+  gap: 28px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr);
+}
+.workflow-edit-grid > :nth-child(2) {
+  border-left: 1px solid var(--border);
+  padding-left: 28px;
+}
+.workflow-node-editor {
+  min-width: 0;
+}
+.mission-layout {
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 28px;
+}
+.mission-list {
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+.mission-list > a {
+  padding: 16px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.mission-list > a:hover {
+  background: var(--muted);
+}
+.mission-list > a[aria-current] {
+  box-shadow: inset 2px 0 0 var(--primary);
+  background: var(--note);
+}
+.mission-task-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mission-task-list button {
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  background: var(--card);
+}
+.mission-task-list button[aria-pressed='true'] {
+  background: var(--note);
+  outline-color: var(--primary);
+}
+.approval-list {
+  gap: 20px;
+}
+.approval-card[data-risk='high'],
+.approval-card[data-kind='uncertain'] {
+  border-left: 3px solid var(--warning);
+  padding-left: 24px;
+}
+.approval-card[data-status='approved'],
+.approval-card[data-status='resolved'] {
+  border-left: 3px solid var(--success);
+  padding-left: 24px;
+}
+.approval-preview {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+.approval-rule {
+  border-block: 1px solid var(--border);
+  padding-block: 12px;
+}
+.approval-preview details > summary {
+  color: var(--muted-foreground);
+}
+.email-preview-body {
+  max-width: 80ch;
+}
+.batch-approval .batch-item {
+  padding: 24px 0 4px;
+}
+.knowledge-upload-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+.memory-records {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.memory-records > article {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 24px 0;
+  background: transparent;
+}
+.memory-records > article textarea {
+  min-height: 90px;
+}
+.recipe-catalogue {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin-top: 24px;
+}
+.recipe-catalogue li {
+  padding: 20px 0;
+}
+.recipe-catalogue li > button.secondary {
+  padding: 0;
+  min-height: 32px;
+  border: 0;
+  border-radius: 0;
+  color: var(--foreground);
+  background: transparent;
+  font-weight: 650;
+}
+.recipe-catalogue li > button.secondary:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.recipe-catalogue li > button.secondary[aria-pressed='true'] {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.recipe-catalogue p {
+  max-width: 60ch;
+  color: var(--muted-foreground);
+  margin: 6px 0 0;
+}
+.connector-records > details,
+.connector-catalogue > details {
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
+}
+.connector-catalogue > details > ul {
+  list-style: none;
+  padding: 0 0 0 20px;
+}
+.connector-catalogue > details li {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.connector-catalogue > details li > p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+}
+.operation-integration > article.durable-card {
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 20px 0;
+  background: transparent;
+}
+.operation-integration > article > button {
+  margin: 4px 8px 4px 0;
+}
+.operation-integration > form {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.browser-live canvas {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 14px 0;
+}
+.browser-live > p,
+.browser-profile-list > p {
+  max-width: 82ch;
+}
+.browser-profile-list,
+#browser-sessions {
+  margin: 30px 0;
+}
+.browser-profile-list > article.durable-card,
+#browser-sessions > article.durable-card {
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 20px 0;
+  background: transparent;
+}
+.browser-profile-list details {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.browser-profile-list details > form,
+.browser-profile-list details > fieldset {
+  margin-block: 16px;
+}
+.browser-profile-list details > fieldset {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.browser-live .knowledge-actions {
+  gap: 8px;
+}
+.browser-live > .setup-form {
+  max-width: 560px;
+}
+.browser-recording {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  margin-top: 20px;
+}
+.browser-recording > .setup-field {
+  max-width: 440px;
+}
+.step-index {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.eval-composer > fieldset {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+  padding: 18px 0 0;
+}
+.eval-composer > fieldset > legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding-right: 12px;
+}
+.eval-history > p:not(:first-of-type) {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.eval-history > p > button {
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  background: transparent;
+}
+.eval-history > p > button[aria-pressed='true'] {
+  background: var(--note);
+  border-color: var(--primary);
+}
+.browser-session-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-block: 18px;
+}
+.provider-list {
+  gap: 28px;
+}
+.provider-card {
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.provider-heading {
+  padding: 24px 0 16px;
+}
+.provider-controls,
+.model-row {
+  padding-inline: 0;
+}
+.model-row {
+  gap: 28px;
+}
+.model-identity h3 {
+  font-size: 15px;
+}
+.model-identity > code {
+  display: block;
+  margin: 6px 0 12px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.model-capabilities {
+  gap: 6px;
+}
+.model-routing {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0 0 24px;
+}
+.model-routing dl {
+  gap: 24px;
+}
+.audit-records > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 24px;
+  padding: 20px 0;
+}
+.audit-records > article p {
+  grid-column: 1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.audit-records > article small {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.table-scroll {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-block: 18px;
+}
+.table-scroll th,
+.table-scroll td {
+  padding: 13px 16px;
+  font-size: 12px;
+}
+.table-scroll thead th {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.table-scroll tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.table-scroll tbody tr:hover {
+  background: var(--muted);
+}
+.table-scroll caption {
+  padding: 13px 16px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 1100px) {
+  .mission-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .workflow-edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .workflow-edit-grid > :nth-child(2) {
+    padding: 24px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+@media (max-width: 760px) {
+  .agent-team,
+  .knowledge-upload-grid,
+  .recipe-catalogue,
+  .mission-layout {
+    grid-template-columns: 1fr;
+  }
+  .mission-list {
+    max-height: 280px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .workspace-section-nav {
+    gap: 4px 18px;
+    margin-bottom: 20px;
+  }
+  .workflow-catalogue a.durable-card {
+    grid-template-columns: 1fr;
+  }
+  .workflow-catalogue p {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .approval-preview {
+    padding: 16px;
+  }
+  .audit-records > article {
+    grid-template-columns: 1fr;
+  }
+  .audit-records > article small {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .operation-filter {
+    max-width: none;
+  }
+}
+@media (max-width: 480px) {
+  .mission-task-list {
+    grid-template-columns: 1fr;
+  }
+  .approval-fields {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  .approval-fields dd {
+    margin-bottom: 10px;
+  }
+  .agent-editor fieldset {
+    padding: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-team a,
+  .workflow-catalogue a.durable-card {
+    transition: none;
+  }
+}

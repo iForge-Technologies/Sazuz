@@ -1,0 +1,60 @@
+{
+  "id": 21,
+  "slug": "downloads-organizer",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Downloads Organizer",
+  "description": "Inspect a scoped laptop folder and propose safe names and filing moves.",
+  "agent": "operator",
+  "assignments": [
+    {
+      "agent": "operator",
+      "task": "Inspect the authorized folder inventory, propose deterministic naming/sorting rules and detect name collisions before any move."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{path?, change?, observedAt?}; cron inventories the folder, or a signed file-event producer supplies change data.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "deviceId",
+      "label": "Paired Bridge device ID",
+      "help": "Select the paired device ID shown in Bridge. This is an identifier, not a credential.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "folder",
+      "label": "Approved folder alias",
+      "help": "The folder alias on both the laptop and its reviewed server grant.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "draft"
+    }
+  ],
+  "modes": ["manual", "cron", "webhook"],
+  "defaultCron": "0 * * * *",
+  "policy": "review_changes",
+  "instructions": "Use local.fs.list/read only within the selected Bridge device/folder. Prepare non-overwriting same-folder moves and a separate deletion proposal. In apply mode use local.fs.move for approved moves, respecting the existing alias boundary and file collision checks. Never execute arbitrary shell source, recurse outside the root, overwrite occupied destinations or delete without explicit policy approval.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Pair the Bridge device, grant Operator local.fs.list/read/move for one folder alias, and approve its pinned scope. Deletion needs an additional explicit grant."
+  ],
+  "approvalPoints": [
+    "Moves follow policy; deletes always require explicit approval and a laptop-side delete grant."
+  ],
+  "limitations": [
+    "Bridge has no native file watcher in this phase. Use periodic inventory or an authenticated file-event producer; operations remain single-file and within one alias."
+  ],
+  "eventContract": "{path?, change?, observedAt?}; cron inventories the folder, or a signed file-event producer supplies change data."
+}

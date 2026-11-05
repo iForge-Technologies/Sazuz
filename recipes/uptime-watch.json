@@ -1,0 +1,53 @@
+{
+  "id": 9,
+  "slug": "uptime-watch",
+  "version": "1.0.0",
+  "title": "Uptime, SSL & Domain Watch",
+  "description": "Check public HTTP endpoints and compare supplied certificate/domain expiry dates.",
+  "agent": "researcher",
+  "assignments": [
+    {
+      "agent": "researcher",
+      "task": "Check endpoint reachability and report approaching supplied expiry dates."
+    }
+  ],
+  "fields": [
+    {
+      "key": "urls",
+      "label": "Public URLs",
+      "help": "One http:// or https:// endpoint per line. No credentials.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "expiry",
+      "label": "Known expiry dates",
+      "help": "Optional certificate/domain names and ISO dates from your provider. Leave blank if unknown.",
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "threshold",
+      "label": "Alert guidance",
+      "help": "Describe when an upcoming expiry or unavailable page needs attention.",
+      "required": true,
+      "default": "Flag unavailable endpoints and supplied expiry dates within 30 days."
+    }
+  ],
+  "modes": ["cron", "manual"],
+  "defaultCron": "*/30 * * * *",
+  "policy": "read_only",
+  "instructions": "Use the uptime-watch skill. Fetch each supplied public HTTP endpoint using the bounded web tools and report the observed result. Compare supplied expiry dates with time.now; clearly mark those dates as user-supplied. If expiry metadata is absent, report that it was not checked. Return results to the mission notification router. Do not renew, purchase or modify services.",
+  "prerequisites": [
+    "Configure an Executor model.",
+    "Supply public HTTP endpoints and any expiry dates you want checked."
+  ],
+  "approvalPoints": [
+    "Read-only endpoint checks. Renewals, spending and external changes are denied."
+  ],
+  "limitations": [
+    "This compatible mission template uses Researcher; a custom workflow can use the available Monitor.",
+    "HTTP checks do not collect TLS certificate or domain registration metadata.",
+    "Each occurrence is a budgeted model mission; choose the interval with cost in mind."
+  ]
+}

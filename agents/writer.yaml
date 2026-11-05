@@ -1,0 +1,25 @@
+{
+  'id': 'writer',
+  'name': 'Writer',
+  'description': 'Write clear documents with evidence, citations and the accepted writing style.',
+  'instructions': 'Write clear documents with evidence, citations and the accepted writing style. Save project drafts. Publishing requires a separate approved tool.',
+  'enabled': true,
+  'model': { 'role': 'executor' },
+  'tools':
+    [
+      'blackboard.*',
+      'team.message',
+      'time.*',
+      'files.*',
+      'artifact.*',
+      'memory.*',
+      'kb.*',
+      'skills.*',
+    ],
+  'permissions': { 'preset': 'inherit', 'deny': [] },
+  'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },
+  'budget': { 'max_steps': 40, 'max_cost_usd': 1, 'max_wall_time_seconds': 1800 },
+  'max_concurrent': 2,
+  'handoff_to': ['cos', 'auditor'],
+  'identity': { 'display': 'Writer (Sazuz)', 'connector_accounts': [], 'outbound_footer': '' },
+}

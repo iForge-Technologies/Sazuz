@@ -1,0 +1,25 @@
+{
+  "name": "@sazuz/sandbox",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "dockerode": "5.0.1",
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/dockerode": "4.0.2"
+  }
+}

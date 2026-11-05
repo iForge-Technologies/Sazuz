@@ -1,0 +1,58 @@
+{
+  "id": 19,
+  "slug": "client-report-generator",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "title": "Client Report Generator",
+  "description": "Produce a source-backed monthly PDF report draft from metrics.",
+  "agent": "comms",
+  "assignments": [
+    {
+      "agent": "analyst",
+      "task": "Validate the supplied metrics, compare periods and record source IDs, calculations and gaps."
+    },
+    {
+      "agent": "writer",
+      "task": "Draft the client report with clear charts/tables, findings, limitations and action items."
+    },
+    {
+      "agent": "coder",
+      "task": "Render the reviewed narrative and metrics to a PDF draft with code.run, preserving the actual artifact path and validation evidence."
+    },
+    {
+      "agent": "comms",
+      "task": "Prepare a delivery message for the owner, referencing the actual PDF artifact and any unresolved prerequisites."
+    }
+  ],
+  "fields": [
+    {
+      "key": "context",
+      "label": "Sources, evidence and owner instructions",
+      "help": "{period, metrics, sourceLinks?, client?, deliveryDestination?}.",
+      "required": true,
+      "default": ""
+    },
+    {
+      "key": "mode",
+      "label": "Execution mode",
+      "help": "Use draft for read-only preparation. Use apply to enable the review checkpoint and approved changes. Each side effect still follows policy.",
+      "required": true,
+      "default": "apply"
+    }
+  ],
+  "modes": ["manual", "cron"],
+  "defaultCron": "0 10 1 * *",
+  "policy": "review_changes",
+  "instructions": "Use supplied metrics or scoped official read tools. Keep all calculations attributable to evidence. PDF rendering uses code.run only inside the approved hardened Docker sandbox; no generated host code is permitted. Record the actual artifact and validate its page count/content; never invent a PDF path. In apply mode send only if the owner provided an explicit destination and approved the message. If the connector cannot attach the artifact, provide the accessible artifact link or report the missing capability.",
+  "prerequisites": [
+    "Configure the required model roles in Settings. Agent grants and current account/MCP/Bridge permissions must be explicitly reviewed; installing a recipe does not add them.",
+    "Provide metric sources and Docker sandbox availability. Analyst/Writer/Coder/Comms must be enabled; grant Coder code.run and any explicit delivery account."
+  ],
+  "approvalPoints": [
+    "Sandbox rendering and sending use policy approval. Sending requires an explicit recipient."
+  ],
+  "limitations": [
+    "Draft mode produces the report content; apply mode enables approved sandbox PDF rendering and optional delivery. Actual Docker/PDF rendering requires a Docker host."
+  ],
+  "eventContract": "{period, metrics, sourceLinks?, client?, deliveryDestination?}."
+}

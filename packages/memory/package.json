@@ -1,0 +1,26 @@
+{
+  "name": "@sazuz/memory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sazuz/config": "workspace:*",
+    "@sazuz/core": "workspace:*",
+    "@sazuz/db": "workspace:*",
+    "@sazuz/llm": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@sazuz/vault": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "pdfjs-dist": "6.5.438",
+    "mammoth": "1.13.0",
+    "parse5": "8.1.0",
+    "fflate": "0.8.3",
+    "zod": "4.6.7"
+  }
+}
