@@ -62,6 +62,8 @@ import { isWorkflowControl, createWorkflowControlTools } from '@sazuz/workflows'
 import { workflowNodeExecutionSchema } from '@sazuz/core/workflows';
 import { createWorkflowInvocationTool } from './workflow-invocation.js';
 import { createProjectActivityTool } from './project-activity.js';
+import { isS2aControl, s2aTools, workflowAllows } from '@sazuz/workflows/s2a';
+import { createMcpTools, mcpToolName } from '@sazuz/mcp/connections';
 
 const executionSchema = z.strictObject({
   output: z.json(),
@@ -122,7 +124,29 @@ export class ActionStore {
     const workflowNode = context.run.workflowNode
       ? workflowNodeExecutionSchema.parse(context.run.workflowNode)
       : null;
-    const control = isWorkflowControl(context.run.workflowNode, call.name);
+    const s2a = durableCheckpointSchema.safeParse(context.run.checkpoint).data?.workflow;
+    const control =
+      isWorkflowControl(context.run.workflowNode, call.name) || isS2aControl(s2a, call.name);
+    if (
+      (s2a && !workflowAllows(s2a, call.name)) ||
+      (!s2a && call.name.startsWith('s2a.')) ||
+      (call.name.startsWith('mcp_connection.') &&
+        !settings.advanced.value.mcp.some(
+          (connection) =>
+            connection.enabled &&
+            connection.agents.includes(agent) &&
+            connection.tools.some(
+              (entry) => entry.enabled && mcpToolName(connection.id, entry.name) === call.name,
+            ),
+        ))
+    )
+      return {
+        action: 'deny',
+        effect: tool.effect,
+        ruleId: 'integration-scope',
+        reason: 'This tool is unavailable to the active workflow node or agent.',
+        matchedRuleIds: ['integration-scope'],
+      };
     if (control) {
       const identities = [
         await runAgent(database, this.options.userId, runId, agent),
@@ -245,6 +269,13 @@ export class ActionStore {
           reason: `Mission checkpoint: ${checkpoints.data.user_checkpoints.join('; ')}`,
         };
     }
+    if (call.name === 's2a.approval' && decision.action !== 'deny')
+      return {
+        ...decision,
+        action: 'ask',
+        ruleId: 's2a-checkpoint',
+        reason: 'This S2A workflow requires your explicit approval.',
+      };
     return decision;
   }
   async ensureApproval(
@@ -681,6 +712,8 @@ export async function decideApproval(
   const context = initial ? await missionContext(database, initial.runId, userId) : null;
   if (!initial || !context) throw new MissionError('MISSION_NOT_FOUND');
   const available = new ToolRegistry(tools.list().map((tool) => tools.get(tool.name)));
+  for (const tool of [...s2aTools(), ...createMcpTools(() => getSettings().advanced.value.mcp)])
+    if (!available.list().some((entry) => entry.name === tool.name)) available.register(tool);
   if (!available.list().some((tool) => tool.name === 'project.activity'))
     available.register(createProjectActivityTool(database));
   if (!available.list().some((tool) => tool.name === 'workflow.run'))
@@ -748,7 +781,22 @@ export async function decideApproval(
         rules: setting.security.value.rules,
       });
       const agent = agentRoleSchema.parse(run.agentId);
-      const control = isWorkflowControl(run.workflowNode, call.name);
+      const control =
+        isWorkflowControl(run.workflowNode, call.name) || isS2aControl(state.workflow, call.name);
+      if (
+        (state.workflow && !workflowAllows(state.workflow, call.name)) ||
+        (!state.workflow && call.name.startsWith('s2a.')) ||
+        (call.name.startsWith('mcp_connection.') &&
+          !setting.advanced.value.mcp.some(
+            (connection) =>
+              connection.enabled &&
+              connection.agents.includes(agent) &&
+              connection.tools.some(
+                (entry) => entry.enabled && mcpToolName(connection.id, entry.name) === call.name,
+              ),
+          ))
+      )
+        throw new MissionError('APPROVAL_INVALID');
       if (control) {
         const identities = [
           await runAgent(database, userId, run.id, agent),

@@ -28,6 +28,12 @@ export const navigationGroups = [
   {
     label: 'Build',
     pages: [
+      {
+        name: 'S2A',
+        href: '/s2a',
+        icon: 'workflows',
+        description: 'Visual workflows and schedules',
+      },
       { name: 'Agents', href: '/agents', icon: 'agents', description: 'Your team and permissions' },
       {
         name: 'Workflows',
@@ -81,6 +87,18 @@ export const navigationGroups = [
         href: '/connectors',
         icon: 'connectors',
         description: 'Accounts, MCP and devices',
+      },
+      {
+        name: 'Channels',
+        href: '/channels',
+        icon: 'chat',
+        description: 'Messaging connections and WhatsApp pairing',
+      },
+      {
+        name: 'MCP',
+        href: '/mcp-connections',
+        icon: 'connectors',
+        description: 'Remote MCP connections and tool grants',
       },
       { name: 'Costs', href: '/costs', icon: 'costs', description: 'Usage, budgets and forecasts' },
       { name: 'Evals', href: '/evals', icon: 'evals', description: 'Evaluate and compare runs' },

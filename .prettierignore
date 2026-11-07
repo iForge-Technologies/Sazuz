@@ -16,3 +16,5 @@ sazuz-build-prompt.md
 docs/PLAN.md
 **/migrations/meta/**
 **/next-env.d.ts
+
+apps/web/public/service-worker.global.js

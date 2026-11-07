@@ -27,7 +27,12 @@ export function createExecutionBroker(
       throw error;
     }
   }
-  async function send(reference: string | null, scope: ExecutionScope, signal?: AbortSignal) {
+  async function send(
+    reference: string | null,
+    scope: ExecutionScope,
+    signal?: AbortSignal,
+    endpoint = '/internal/execution',
+  ) {
     const { workspaceId, operatorKey } = await identity();
     const { request, signature } = makeExecutionRequest(operatorKey, {
       workspaceId,
@@ -37,7 +42,7 @@ export function createExecutionBroker(
     });
     let response: Response;
     try {
-      response = await fetcher(new URL('/internal/execution', config.serverUrl), {
+      response = await fetcher(new URL(endpoint, config.serverUrl), {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-sazuz-worker-signature': signature },
         body: JSON.stringify(request),
@@ -66,6 +71,10 @@ export function createExecutionBroker(
     return { operatorKey, request, body };
   }
   return {
+    async channel(scope: ExecutionScope, signal: AbortSignal) {
+      const { body } = await send(null, scope, signal, '/internal/channel-send');
+      return z.object({ id: z.string().min(1).max(200) }).parse(body);
+    },
     async ready(scope: ExecutionScope, signal?: AbortSignal) {
       const { body } = await send(null, scope, signal);
       if (!z.strictObject({ ready: z.literal(true) }).safeParse(body).success)

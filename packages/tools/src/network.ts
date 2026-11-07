@@ -11,6 +11,9 @@ export interface ResolvedAddress {
 }
 
 export interface SafeNetworkRequest {
+  responseId?: string;
+  method?: 'GET' | 'POST' | 'DELETE';
+  body?: string;
   url: URL;
   address: ResolvedAddress;
   signal: AbortSignal;
@@ -206,7 +209,7 @@ function transport(request: SafeNetworkRequest): Promise<SafeNetworkResponse> {
     const outbound = sender(
       request.url,
       {
-        method: 'GET',
+        method: request.method ?? 'GET',
         agent: false,
         lookup,
         signal: request.signal,
@@ -232,7 +235,50 @@ function transport(request: SafeNetworkRequest): Promise<SafeNetworkResponse> {
           if (size > request.maxBytes) {
             response.destroy();
             reject(new ToolError('RESPONSE_TOO_LARGE'));
-          } else chunks.push(chunk);
+          } else {
+            chunks.push(chunk);
+            if (
+              request.responseId &&
+              response.headers['content-type']?.includes('text/event-stream')
+            ) {
+              const body = Buffer.concat(chunks).toString('utf8');
+              const complete = body
+                .replaceAll('\r\n', '\n')
+                .split('\n\n')
+                .slice(0, -1)
+                .some((event) => {
+                  const data = event
+                    .split('\n')
+                    .filter((line) => line.startsWith('data:'))
+                    .map((line) => line.slice(5).trimStart())
+                    .join('\n');
+                  if (!data) return false;
+                  try {
+                    return (
+                      z
+                        .object({ id: z.string(), jsonrpc: z.literal('2.0') })
+                        .safeParse(JSON.parse(data)).data?.id === request.responseId
+                    );
+                  } catch {
+                    return false;
+                  }
+                });
+              if (complete) {
+                resolve({
+                  status: response.statusCode ?? 502,
+                  headers: {
+                    'content-type': response.headers['content-type'],
+                    'mcp-session-id':
+                      typeof response.headers['mcp-session-id'] === 'string'
+                        ? response.headers['mcp-session-id']
+                        : undefined,
+                  },
+                  body,
+                });
+                response.destroy();
+              }
+            }
+          }
         });
         response.once('error', () => reject(new ToolError('NETWORK_FAILED')));
         response.once('aborted', () => reject(new ToolError('NETWORK_FAILED')));
@@ -242,6 +288,10 @@ function transport(request: SafeNetworkRequest): Promise<SafeNetworkResponse> {
             headers: {
               'content-type': response.headers['content-type'],
               location: response.headers.location,
+              'mcp-session-id':
+                typeof response.headers['mcp-session-id'] === 'string'
+                  ? response.headers['mcp-session-id']
+                  : undefined,
             },
             body: Buffer.concat(chunks).toString('utf8'),
           }),
@@ -251,7 +301,7 @@ function transport(request: SafeNetworkRequest): Promise<SafeNetworkResponse> {
     outbound.once('error', () =>
       reject(new ToolError(request.signal.aborted ? 'TOOL_ABORTED' : 'NETWORK_FAILED')),
     );
-    outbound.end();
+    outbound.end(request.body);
   });
 }
 
@@ -269,6 +319,41 @@ async function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise
   } finally {
     if (listener !== undefined) signal.removeEventListener('abort', listener);
   }
+}
+
+/** Authenticated protocol calls pin checked DNS addresses and never follow redirects. */
+export async function requestPublicProtocol(
+  value: string,
+  input: {
+    method: 'POST' | 'DELETE';
+    body?: string;
+    headers: Record<string, string>;
+    signal: AbortSignal;
+    responseId?: string;
+  },
+  dependencies: SafeNetworkDependencies = {},
+): Promise<SafeNetworkResponse> {
+  const signal = AbortSignal.any([input.signal, AbortSignal.timeout(15_000)]);
+  const resolved = await abortable(resolvePublicUrl(value, dependencies), signal);
+  if (resolved.url.protocol !== 'https:' || (input.body && Buffer.byteLength(input.body) > 131_072))
+    throw new ToolError('UNSAFE_URL');
+  const response = responseSchema.parse(
+    await abortable(
+      (dependencies.request ?? transport)({
+        ...resolved,
+        method: input.method,
+        ...(input.body === undefined ? {} : { body: input.body }),
+        ...(input.responseId ? { responseId: input.responseId } : {}),
+        headers: { ...input.headers, 'accept-encoding': 'identity' },
+        signal,
+        maxBytes: 1_048_576,
+      }),
+      signal,
+    ),
+  );
+  if (Buffer.byteLength(response.body) > 1_048_576) throw new ToolError('RESPONSE_TOO_LARGE');
+  if (response.status >= 300 && response.status < 400) throw new ToolError('UNSAFE_URL');
+  return response;
 }
 
 /** Re-resolve and revalidate every redirect, then connect only to the selected checked address. */

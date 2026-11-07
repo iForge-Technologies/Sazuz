@@ -42,6 +42,7 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
       'operations',
       'backups',
       'voice',
+      's2a',
     ].includes(path[0] ?? '') ||
     path.some((part) => !/^[a-zA-Z0-9_-]+$/.test(part))
   )

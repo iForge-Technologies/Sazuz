@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { policyRuleSchema } from '@sazuz/policy';
 import { connectorProviderSchema, connectorResourceFields } from '@sazuz/core/connectors';
+import { channelConnectionSchema, mcpConnectionSchema, uniqueConnections } from './integrations';
 
 export const secretRefSchema = z.string().regex(/^secret:\/\/sec_[0-9A-HJKMNP-TV-Z]{26}$/);
 const label = z.string().trim().min(1).max(120);
@@ -253,6 +254,7 @@ export const settingsSchemas = {
       .max(30),
   }),
   channels: z.strictObject({
+    connections: z.array(channelConnectionSchema).max(30).refine(uniqueConnections).default([]),
     webPush: z.boolean(),
     telegramSecretRef: secret,
     discordSecretRef: secret,
@@ -301,6 +303,7 @@ export const settingsSchemas = {
   }),
   advanced: z
     .strictObject({
+      mcp: z.array(mcpConnectionSchema).max(30).refine(uniqueConnections).default([]),
       logLevel: z.enum(['debug', 'info', 'warn', 'error']),
       telemetry: z.boolean(),
       telemetryEndpoint: endpoint.nullable().default(null),
@@ -386,6 +389,7 @@ export const defaultSettings: SettingsValues = {
   },
   connectors: { accounts: [] },
   channels: {
+    connections: [],
     webPush: false,
     telegramSecretRef: null,
     discordSecretRef: null,
@@ -412,6 +416,7 @@ export const defaultSettings: SettingsValues = {
     target: 'local',
   },
   advanced: {
+    mcp: [],
     logLevel: 'info',
     telemetry: false,
     telemetryEndpoint: null,
@@ -448,7 +453,18 @@ export const settingsDocumentSchema = z
         });
     }
   })
-  .transform((document) => document as SettingsDocument);
+  .transform(
+    (document) =>
+      Object.fromEntries(
+        namespaceSchema.options.map((namespace) => [
+          namespace,
+          {
+            version: document[namespace].version,
+            value: parseSetting(namespace, document[namespace].value),
+          },
+        ]),
+      ) as SettingsDocument,
+  );
 
 export function freshSettings(): SettingsDocument {
   return settingsDocumentSchema.parse(

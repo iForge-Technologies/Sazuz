@@ -115,60 +115,116 @@
       "breakpoints": true
     },
     {
-      "idx": 16, "version": "7", "when": 1793778000000,
-      "tag": "0016_phase7_bridge", "breakpoints": true
+      "idx": 16,
+      "version": "7",
+      "when": 1793778000000,
+      "tag": "0016_phase7_bridge",
+      "breakpoints": true
     },
     {
-      "idx": 17, "version": "7", "when": 1793781600000,
-      "tag": "0017_phase8_workflows", "breakpoints": true
+      "idx": 17,
+      "version": "7",
+      "when": 1793781600000,
+      "tag": "0017_phase8_workflows",
+      "breakpoints": true
     },
     {
-      "idx": 18, "version": "7", "when": 1793785200000,
-      "tag": "0018_phase8_workflow_drafts", "breakpoints": true
+      "idx": 18,
+      "version": "7",
+      "when": 1793785200000,
+      "tag": "0018_phase8_workflow_drafts",
+      "breakpoints": true
     },
     {
-      "idx": 19, "version": "7", "when": 1793788800000,
-      "tag": "0019_phase8_calm", "breakpoints": true
+      "idx": 19,
+      "version": "7",
+      "when": 1793788800000,
+      "tag": "0019_phase8_calm",
+      "breakpoints": true
     },
     {
-      "idx": 20, "version": "7", "when": 1793792400000,
-      "tag": "0020_phase9_recordings", "breakpoints": true
+      "idx": 20,
+      "version": "7",
+      "when": 1793792400000,
+      "tag": "0020_phase9_recordings",
+      "breakpoints": true
     },
     {
-      "idx": 21, "version": "7", "when": 1793796000000,
-      "tag": "0021_phase9_replay", "breakpoints": true
+      "idx": 21,
+      "version": "7",
+      "when": 1793796000000,
+      "tag": "0021_phase9_replay",
+      "breakpoints": true
     },
     {
-      "idx": 22, "version": "7", "when": 1793799600000,
-      "tag": "0022_phase9_style_checks", "breakpoints": true
+      "idx": 22,
+      "version": "7",
+      "when": 1793799600000,
+      "tag": "0022_phase9_style_checks",
+      "breakpoints": true
     },
     {
-      "idx": 23, "version": "7", "when": 1793803200000,
-      "tag": "0023_phase9_skill_proposals", "breakpoints": true
+      "idx": 23,
+      "version": "7",
+      "when": 1793803200000,
+      "tag": "0023_phase9_skill_proposals",
+      "breakpoints": true
     },
     {
-      "idx": 24, "version": "7", "when": 1793822400000,
-      "tag": "0024_phase10_replay", "breakpoints": true
+      "idx": 24,
+      "version": "7",
+      "when": 1793822400000,
+      "tag": "0024_phase10_replay",
+      "breakpoints": true
     },
     {
-      "idx": 25, "version": "7", "when": 1793826000000,
-      "tag": "0025_phase10_observability", "breakpoints": true
+      "idx": 25,
+      "version": "7",
+      "when": 1793826000000,
+      "tag": "0025_phase10_observability",
+      "breakpoints": true
     },
     {
-      "idx": 26, "version": "7", "when": 1793829600000,
-      "tag": "0026_phase10_evals", "breakpoints": true
+      "idx": 26,
+      "version": "7",
+      "when": 1793829600000,
+      "tag": "0026_phase10_evals",
+      "breakpoints": true
     },
     {
-      "idx": 27, "version": "7", "when": 1793840400000,
-      "tag": "0027_phase11_identity_audit", "breakpoints": true
+      "idx": 27,
+      "version": "7",
+      "when": 1793840400000,
+      "tag": "0027_phase11_identity_audit",
+      "breakpoints": true
     },
     {
-      "idx": 28, "version": "7", "when": 1793844000000,
-      "tag": "0028_phase11_backups", "breakpoints": true
+      "idx": 28,
+      "version": "7",
+      "when": 1793844000000,
+      "tag": "0028_phase11_backups",
+      "breakpoints": true
     },
     {
-      "idx": 29, "version": "7", "when": 1793847600000,
-      "tag": "0029_phase11_voice_push", "breakpoints": true
+      "idx": 29,
+      "version": "7",
+      "when": 1793847600000,
+      "tag": "0029_phase11_voice_push",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794009000000,
+      "tag": "0030_s2a_channels",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794009001000,
+      "tag": "0031_s2a_schedules",
+      "breakpoints": true
     }
   ]
 }

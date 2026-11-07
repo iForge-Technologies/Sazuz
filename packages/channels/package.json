@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./whatsapp-qr": "./src/whatsapp-qr.ts",
     ".": "./src/index.ts"
   },
   "scripts": {
@@ -13,6 +14,14 @@
     "@sazuz/core": "workspace:*",
     "@sazuz/vault": "workspace:*",
     "web-push": "3.6.7",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@sazuz/config": "workspace:*",
+    "@sazuz/tools": "workspace:*",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "pino": "10.4.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "@types/qrcode": "1.5.6"
   }
 }

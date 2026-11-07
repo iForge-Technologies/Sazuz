@@ -83,6 +83,39 @@ function fixture(overrides: Partial<LoopOptions> = {}) {
   return { options: base, snapshots, executions: () => executions };
 }
 describe('bounded agent loop', () => {
+  it('yields after a completed tool group without completing the run or repeating effects', async () => {
+    let groups = 0,
+      generations = 0;
+    const f = fixture({
+      generate: () => {
+        generations++;
+        return Promise.resolve(
+          result([
+            { id: 'a', name: 'test.read', args: {} },
+            { id: 'b', name: 'test.read', args: {} },
+          ]),
+        );
+      },
+      onTool: () => {
+        groups++;
+        return Promise.resolve();
+      },
+      yieldAfterTools: () => groups === 2,
+    });
+    const yielded = await runAgent(f.options);
+    expect(yielded.status).toBe('running');
+    expect(yielded.pendingCalls).toEqual([]);
+    expect(f.executions()).toBe(2);
+    expect(generations).toBe(1);
+    const resumed = await runAgent({
+      ...f.options,
+      checkpoint: yielded,
+      yieldAfterTools: () => false,
+      generate: () => Promise.resolve(result()),
+    });
+    expect(resumed.status).toBe('completed');
+    expect(f.executions()).toBe(2);
+  });
   it('persists deterministic instructions before executing and resumes an approval without inference', async () => {
     let planned = 0,
       allowed = false,

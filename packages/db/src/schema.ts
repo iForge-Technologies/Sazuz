@@ -18,6 +18,67 @@ import {
 } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 
+export const s2aWorkflows = pgTable('s2a_workflows', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  graph: jsonb('graph').notNull(),
+  revision: integer('revision').notNull(),
+  publishedRevision: integer('published_revision'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const s2aRevisions = pgTable(
+  's2a_revisions',
+  {
+    workflowId: text('workflow_id')
+      .notNull()
+      .references(() => s2aWorkflows.id, { onDelete: 'cascade' }),
+    revision: integer('revision').notNull(),
+    graph: jsonb('graph').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.workflowId, table.revision] })],
+);
+export const s2aExecutions = pgTable('s2a_executions', {
+  runId: text('run_id')
+    .primaryKey()
+    .references(() => runs.id, { onDelete: 'cascade' }),
+  workflowId: text('workflow_id')
+    .notNull()
+    .references(() => s2aWorkflows.id, { onDelete: 'cascade' }),
+  revision: integer('revision').notNull(),
+  snapshot: jsonb('snapshot').notNull(),
+});
+export const channelInbox = pgTable('channel_inbox', {
+  id: text('id').primaryKey(),
+  connectionId: text('connection_id').notNull(),
+  sender: text('sender').notNull(),
+  conversation: text('conversation').notNull(),
+  missionId: text('mission_id').references(() => missions.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const channelSessions = pgTable('channel_sessions', {
+  connectionId: text('connection_id').primaryKey(),
+  secretRef: text('secret_ref').notNull(),
+  revision: integer('revision').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const s2aSchedules = pgTable('s2a_schedules', {
+  workflowId: text('workflow_id')
+    .primaryKey()
+    .references(() => s2aWorkflows.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  expression: text('expression').notNull(),
+  timezone: text('timezone').notNull(),
+  enabled: boolean('enabled').notNull(),
+  input: jsonb('input').notNull(),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }).notNull(),
+});
+
 export const workerHeartbeats = pgTable(
   'worker_heartbeats',
   {

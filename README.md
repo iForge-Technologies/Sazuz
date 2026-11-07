@@ -141,6 +141,9 @@ The screenshots below come from a fresh local instance running the current UI. S
 | **Missions and agents**  | Delegate work, follow task graphs and handoffs, review evidence, and edit versioned agent definitions.                                   | `/missions` · `/agents`        |
 | **Approvals**            | Inspect proposed actions, edit eligible arguments, approve or deny, and reconcile uncertain outcomes.                                    | `/approvals`                   |
 | **Workflows**            | Combine tools, agents, skills, conditions, transforms, waits, bounded maps, and review nodes. Save and review a revision before running. | `/workflows`                   |
+| **S2A Studio**           | Build visual data, tool, agent, condition and approval workflows with revision snapshots and schedules.                                  | `/s2a`                         |
+| **Channels**             | Connect Discord, Slack, Telegram, official WhatsApp Cloud API or optional unofficial WhatsApp QR sessions.                               | `/channels`                    |
+| **MCP connections**      | Add HTTPS remote tools, review effects and grant agent access alongside project MCP installations.                                       | `/mcp-connections`             |
 | **Automations**          | Configure schedules, RSS, IMAP, and signed webhooks; manage Telegram pairing and Calm Mode digests.                                      | `/automations`                 |
 | **Knowledge and memory** | Ingest documents or URLs, search indexed content with citations, and review or forget scoped memories.                                   | `/knowledge` · `/memory`       |
 | **Skills and recipes**   | Edit reusable instructions, configure recipe templates, review proposed skills, and manage writing-style profiles.                       | `/skills` · `/recipes`         |
@@ -152,16 +155,18 @@ The screenshots below come from a fresh local instance running the current UI. S
 
 ### Connect the services you already use
 
-| Category                 | Implemented integrations                                                              |
-| :----------------------- | :------------------------------------------------------------------------------------ |
-| Mail and calendars       | Gmail, Google Calendar, IMAP/SMTP, Microsoft Outlook and Calendar, CalDAV, CardDAV    |
-| Documents and files      | Google Drive, Sheets, Docs, OneDrive, Notion                                          |
-| Communication            | Slack and Discord bot APIs; Telegram channel delivery and pairing                     |
-| Development and planning | GitHub, Linear, Jira, Todoist                                                         |
-| Other                    | Read-only Stripe balance/invoices, outbound webhooks, signed inbound webhooks         |
-| Extensibility            | MCP client and server; outbound local Bridge for permitted folders and fixed commands |
+| Category                 | Implemented integrations                                                                                      |
+| :----------------------- | :------------------------------------------------------------------------------------------------------------ |
+| Mail and calendars       | Gmail, Google Calendar, IMAP/SMTP, Microsoft Outlook and Calendar, CalDAV, CardDAV                            |
+| Documents and files      | Google Drive, Sheets, Docs, OneDrive, Notion                                                                  |
+| Communication            | Slack and Discord bot APIs; Telegram pairing; official WhatsApp Cloud API and optional unofficial QR sessions |
+| Development and planning | GitHub, Linear, Jira, Todoist                                                                                 |
+| Other                    | Read-only Stripe balance/invoices, outbound webhooks, signed inbound webhooks                                 |
+| Extensibility            | MCP client and server; outbound local Bridge for permitted folders and fixed commands                         |
 
 Each connector exposes a bounded set of operations, not its provider's entire API. Configure the account, resource, and permissions, then grant access to the intended agent. Browser logins, 2FA, and CAPTCHAs use human takeover. [Connection and security notes →](docs/reference.md#connections)
+
+See the [S2A, channels and MCP guide](docs/s2a-channels-mcp.md) for setup, permissions and custom modules.
 
 ## Architecture
 

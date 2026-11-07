@@ -28,6 +28,8 @@ import { knowledgeJobPayloadSchema } from '@sazuz/core/memory';
 import { workflowNodeExecutionSchema } from '@sazuz/core/workflows';
 import { agentDefinitions, durableCheckpointSchema } from '@sazuz/runtime';
 import { acceptedActionReview, agentActionPermission, hasPinnedAgent } from '@sazuz/orchestrator';
+import { mcpToolName } from '@sazuz/mcp/connections';
+import { workflowAllows } from '@sazuz/workflows/s2a';
 import {
   sealExecutionSecret,
   verifyExecutionRequest,
@@ -172,21 +174,39 @@ export function registerExecutionBroker(
           )
             throw denied();
           const allow: readonly string[] = agentDefinitions[agent.data].allow;
+          if (checkpoint.data.workflow && !workflowAllows(checkpoint.data.workflow, call.name))
+            throw denied();
+          const mcp = settings.advanced.value.mcp.find(
+            (connection) =>
+              connection.enabled &&
+              connection.agents.includes(agent.data) &&
+              connection.tools.some(
+                (tool) => tool.enabled && mcpToolName(connection.id, tool.name) === call.name,
+              ),
+          );
           if (
             !pinned &&
+            !mcp &&
             !allow.some((prefix) =>
               prefix.endsWith('.') ? call.name.startsWith(prefix) : call.name === prefix,
             )
           )
             throw denied();
           const action = connectorActions[call.name];
-          const effect = action?.permission.endsWith(':read')
-            ? 'read'
-            : action?.permission.endsWith(':send')
-              ? 'send'
-              : action?.permission.endsWith(':delete')
-                ? 'delete'
-                : 'write';
+          const remoteEffect = mcp?.tools.find(
+            (tool) => mcpToolName(mcp.id, tool.name) === call.name,
+          )?.effect;
+          const effect = remoteEffect
+            ? remoteEffect === 'unknown'
+              ? 'write'
+              : remoteEffect
+            : action?.permission.endsWith(':read')
+              ? 'read'
+              : action?.permission.endsWith(':send')
+                ? 'send'
+                : action?.permission.endsWith(':delete')
+                  ? 'delete'
+                  : 'write';
           if (
             intent.effect !== effect ||
             !(await acceptedActionReview(
@@ -199,25 +219,29 @@ export function registerExecutionBroker(
             ))
           )
             throw denied();
-          const args = accountArgument.safeParse(call.args);
-          if (!action || !args.success) throw denied();
-          const accounts = settings.connectors.value.accounts.filter(
-            (account) => account.id === args.data.accountId,
-          );
-          if (accounts.length !== 1) throw denied();
-          const account = connectorAccountSchema.safeParse(accounts[0]);
-          if (!account.success) throw denied();
-          try {
-            assertAccountPermission(account.data, action.provider, action.permission);
-          } catch {
-            throw denied();
+          if (mcp) {
+            if (mcp.secretRef) references.add(mcp.secretRef);
+          } else {
+            const args = accountArgument.safeParse(call.args);
+            if (!action || !args.success) throw denied();
+            const accounts = settings.connectors.value.accounts.filter(
+              (account) => account.id === args.data.accountId,
+            );
+            if (accounts.length !== 1) throw denied();
+            const account = connectorAccountSchema.safeParse(accounts[0]);
+            if (!account.success) throw denied();
+            try {
+              assertAccountPermission(account.data, action.provider, action.permission);
+            } catch {
+              throw denied();
+            }
+            if (account.data.secretRef) references.add(account.data.secretRef);
+            if (
+              account.data.options.oauthClientSecretRef &&
+              [...googleProviders, 'microsoft-graph'].includes(action.provider)
+            )
+              references.add(account.data.options.oauthClientSecretRef);
           }
-          if (account.data.secretRef) references.add(account.data.secretRef);
-          if (
-            account.data.options.oauthClientSecretRef &&
-            [...googleProviders, 'microsoft-graph'].includes(action.provider)
-          )
-            references.add(account.data.options.oauthClientSecretRef);
         }
       } else if (execution.scope === 'notification') {
         if (

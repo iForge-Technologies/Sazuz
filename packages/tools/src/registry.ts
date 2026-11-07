@@ -189,6 +189,20 @@ export class ToolRegistry {
     return tool;
   }
 
+  replacePrefix(prefix: string, tools: readonly RegisteredTool[]): void {
+    if (
+      !prefix.endsWith('.') ||
+      tools.some((tool) => !tool.name.startsWith(prefix)) ||
+      new Set(tools.map((tool) => tool.name)).size !== tools.length
+    )
+      throw new ToolError('INVALID_TOOL');
+    this.#tools = new Map(
+      [...this.#tools.entries()]
+        .filter(([name]) => !name.startsWith(prefix))
+        .concat(tools.map((tool) => [tool.name, tool] as [string, RegisteredTool])),
+    );
+  }
+
   list(): ToolDescriptor[] {
     return [...this.#tools.values()].map((tool) => ({
       name: tool.name,

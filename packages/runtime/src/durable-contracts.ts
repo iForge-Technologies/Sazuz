@@ -6,7 +6,9 @@ import { graphPlanSchema, sequentialPlanSchema } from '@sazuz/core/graphs';
 import { workflowData } from '@sazuz/core/workflows';
 import { learnedCursorSchema } from '@sazuz/core/learning-replay';
 export { sequentialPlanSchema } from '@sazuz/core/graphs';
+import { s2aStateSchema } from '@sazuz/core/s2a';
 export const durableCheckpointSchema = z.strictObject({
+  workflow: s2aStateSchema.nullable().default(null),
   version: z.literal(1),
   loop: checkpointSchema,
   phase: z.enum(['planning', 'graph', 'workflow', 'task', 'synthesis', 'direct', 'done']),
@@ -97,6 +99,7 @@ export const agentDefinitions = {
       'gmail.',
       'email.',
       'calendar.',
+      'channel.',
     ],
   },
   coder: {

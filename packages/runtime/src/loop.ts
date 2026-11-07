@@ -46,6 +46,8 @@ export interface LoopOptions {
   instruct?(state: RunCheckpoint): Promise<{ text: string; call?: LlmToolCall }>;
   onInstruction?(text: string, state: RunCheckpoint): Promise<void>;
   toolsOnly?: boolean;
+  /** Return at a completed tool boundary so the durable coordinator can select the next agent. */
+  yieldAfterTools?(state: RunCheckpoint): boolean;
   checkpoint: RunCheckpoint;
   limits: RunLimits;
   tools: ToolRegistry;
@@ -222,6 +224,10 @@ export async function runAgent(options: LoopOptions): Promise<RunCheckpoint> {
     if (state.pendingCalls.length) {
       state.pendingCalls = [];
       state.nextCall = 0;
+    }
+    if (options.yieldAfterTools?.(state)) {
+      await persist();
+      return state;
     }
     if (options.toolsOnly)
       return stop(

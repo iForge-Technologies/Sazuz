@@ -45,6 +45,7 @@ import {
   wakeParent,
   publicMessage,
   projectReview,
+  s2aExecutions,
   workKey,
   workflowRuns,
   descendantRunIds,
@@ -90,6 +91,15 @@ import { browserObservationSchema } from '@sazuz/core/browser';
 import { createLearnedInterpreter } from './learned-replay.js';
 import { replaySnapshot } from './replay.js';
 import { replayModelSchema, replaySkillSchema } from '@sazuz/core/replay';
+import { s2aStateSchema } from '@sazuz/core/s2a';
+import {
+  generateWorkflow,
+  s2aTools,
+  s2aModelFree,
+  workflowAllows,
+  workflowObservation,
+} from '@sazuz/workflows/s2a';
+import { createMcpTools } from '@sazuz/mcp/connections';
 
 // A model response may contain up to 128 tool calls; keep its observations before the next step.
 const stepOrdinalStride = 1000;
@@ -313,6 +323,7 @@ export function createDurableExecutor(options: DurableOptions) {
         saved[0]!.status === 'completed' &&
         !context!.run.parentRunId &&
         !workflow &&
+        !s2aModelFree(state!.workflow) &&
         !learned &&
         !replay
       ) {
@@ -480,6 +491,7 @@ export function createDurableExecutor(options: DurableOptions) {
       state = context.run.checkpoint
         ? durableCheckpointSchema.parse(context.run.checkpoint)
         : {
+            workflow: null,
             version: 1,
             loop: newCheckpoint(
               chatHistory.length
@@ -497,6 +509,14 @@ export function createDurableExecutor(options: DurableOptions) {
             taskIndex: 0,
             results: [],
           };
+      if (context.mission.source === 's2a' && !state.workflow) {
+        const [execution] = await database.orm
+          .select()
+          .from(s2aExecutions)
+          .where(eq(s2aExecutions.runId, runId));
+        state.workflow = s2aStateSchema.parse(execution?.snapshot);
+        state.phase = 'direct';
+      }
       state.loop.costUsd = await spend();
       if (!learned && (context.mission.source === 'learned-skill' || state.learned))
         throw new RunSuspension('failed', 'The pinned learned program is no longer available.');
@@ -579,6 +599,8 @@ export function createDurableExecutor(options: DurableOptions) {
       if (!all.list().some((tool) => tool.name === 'workflow.run'))
         all.register(createWorkflowInvocationTool(database, getSettings));
       for (const tool of createWorkflowControlTools(database))
+        if (!all.list().some((entry) => entry.name === tool.name)) all.register(tool);
+      for (const tool of s2aTools())
         if (!all.list().some((entry) => entry.name === tool.name)) all.register(tool);
       all.register(
         defineTool({
@@ -708,7 +730,7 @@ export function createDurableExecutor(options: DurableOptions) {
       const budgetSignal = AbortSignal.any([signal, wallDeadline]);
       async function review(subject: ReviewSubject, loop: RunCheckpoint) {
         if (
-          (workflow?.modelFree || workflowNode?.modelFree) &&
+          (workflow?.modelFree || workflowNode?.modelFree || s2aModelFree(state?.workflow)) &&
           (await projectReview(database, context!.project.userId, context!.project.id)).mode !==
             'off'
         )
@@ -897,6 +919,15 @@ export function createDurableExecutor(options: DurableOptions) {
         await save(state.loop);
       }
       while (state.phase !== 'done') {
+        if (state.workflow?.failure) throw new RunSuspension('failed', state.workflow.failure);
+        const s2aNodeId = state.workflow?.next;
+        const s2aNode = state.workflow?.graph.nodes.find((node) => node.id === s2aNodeId);
+        if (state.workflow && state.loop.nextCall >= state.loop.pendingCalls.length) {
+          await startAgent(
+            s2aNode?.kind === 'agent' || s2aNode?.kind === 'tool' ? s2aNode.agent : 'cos',
+            s2aNode?.kind === 'agent' ? s2aNode.prompt : context.mission.goal,
+          );
+        }
         definition = await pinAgent(
           database,
           context.project.userId,
@@ -905,6 +936,14 @@ export function createDurableExecutor(options: DurableOptions) {
           getSettings().connectors.value.accounts,
         );
         let scoped = new ToolRegistry(all.list().map((tool) => all.get(tool.name)));
+        for (const tool of createMcpTools(
+          () =>
+            getSettings().advanced.value.mcp.filter((connection) =>
+              connection.agents.includes(state!.agentId),
+            ),
+          options.network,
+        ))
+          scoped.register(tool);
         if (options.dynamicTools) {
           const dynamic = await options.dynamicTools(runId, state.agentId);
           for (const tool of dynamic.tools) scoped.register(tool);
@@ -924,6 +963,9 @@ export function createDurableExecutor(options: DurableOptions) {
             !tools.list().some((item) => item.name === tool.name)
           )
             tools.register(tool);
+        if (state.workflow)
+          for (const tool of s2aTools())
+            if (!tools.list().some((item) => item.name === tool.name)) tools.register(tool);
         const actions = new ActionStore({
           database,
           runId,
@@ -958,7 +1000,7 @@ export function createDurableExecutor(options: DurableOptions) {
             .onConflictDoNothing();
         await save(state.loop);
         const toolContext: ToolContext = {
-          modelFree: workflowNode?.modelFree ?? false,
+          modelFree: (workflowNode?.modelFree ?? false) || s2aModelFree(state.workflow),
           memoryScopes: definition.memory.read,
           workspaceDir,
           projectId: context.project.id,
@@ -1012,6 +1054,9 @@ export function createDurableExecutor(options: DurableOptions) {
                     }
                   : {}),
                 toolsOnly: workflowNode?.toolsOnly ?? false,
+                yieldAfterTools: () =>
+                  !!state!.workflow &&
+                  (state!.workflow.next !== s2aNodeId || !!state!.workflow.failure),
                 checkpoint: state.loop,
                 limits: {
                   maxSteps: Math.min(limits.maxSteps, definition.budget.max_steps),
@@ -1026,7 +1071,9 @@ export function createDurableExecutor(options: DurableOptions) {
                 context: toolContext,
                 privateOnly: context.project.privacy === 'private',
                 role: definition.model.role,
-                generate,
+                generate: state.workflow
+                  ? (request) => generateWorkflow(state!.workflow!, request, generate)
+                  : generate,
                 remainingBudget: remaining,
                 paused: async () => signal.aborted || (await hasHumanBrowser(database, runId)),
                 pauseRequested: (output) =>
@@ -1034,7 +1081,17 @@ export function createDurableExecutor(options: DurableOptions) {
                     ? Promise.resolve(true)
                     : hasHumanBrowser(database, runId),
                 save,
-                authorize: (call, tool, loop) => actions.authorize(call, tool, loop),
+                authorize: (call, tool, loop) => {
+                  if (state!.workflow && !workflowAllows(state!.workflow, call.name))
+                    return Promise.resolve({
+                      action: 'deny' as const,
+                      effect: tool.effect,
+                      ruleId: 's2a-node-scope',
+                      reason: 'This tool is not permitted by the active S2A node.',
+                      matchedRuleIds: [],
+                    });
+                  return actions.authorize(call, tool, loop);
+                },
                 execute: async (call, tool, ctx) => {
                   // Embeddings share model spending admission; ordinary tools can overlap across branches.
                   if (!/^(memory|kb)\./.test(tool.name)) await releaseSpend();
@@ -1080,6 +1137,10 @@ export function createDurableExecutor(options: DurableOptions) {
                   : {}),
                 prepareContext: async (loop) => {
                   if (replay) return;
+                  if (state!.workflow) {
+                    if (state!.workflow.failure) throw new Error('S2A node failed.');
+                    return;
+                  }
                   if (JSON.stringify(loop.messages).length < 18000 || loop.messages.length < 8)
                     return;
                   await modelAdmission();
@@ -1127,6 +1188,7 @@ export function createDurableExecutor(options: DurableOptions) {
                   await save(loop);
                 },
                 buildMessages: async (loop) => {
+                  if (state!.workflow) return structuredClone(loop.messages);
                   await modelAdmission();
                   let baseMessages = structuredClone(loop.messages);
                   const notes = await missionBlackboard(
@@ -1230,6 +1292,7 @@ export function createDurableExecutor(options: DurableOptions) {
                           sourceCallKey: `${runId}:${loop.step}:${loop.nextCall}`,
                         };
                     }
+                    if (state!.workflow) workflowObservation(state!.workflow, call, output, status);
                     await tx
                       .insert(runSteps)
                       .values({
@@ -1266,6 +1329,12 @@ export function createDurableExecutor(options: DurableOptions) {
                   }),
               });
         state.loop = result;
+        if (
+          state.workflow &&
+          result.status === 'running' &&
+          (state.workflow.next !== s2aNodeId || state.workflow.failure)
+        )
+          continue;
         if (result.status !== 'completed') break;
         const finalText =
           [...result.messages].reverse().find((message) => message.role === 'assistant')?.content ??

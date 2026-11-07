@@ -116,6 +116,7 @@ permissions to an agent. Adding an account does not automatically authorize agen
 | Google                | Gmail/Calendar and Drive/Sheets/Docs use official APIs; OAuth uses the configured client, exact callback, and narrow scopes |
 | Microsoft             | Delegated Graph access for mail, calendars, and OneDrive; tenant consent can be required                                    |
 | Slack / Discord       | Official bot tokens and scoped channels; no personal-token or self-bot automation                                           |
+| WhatsApp              | Official Cloud API or separately enabled, unofficial QR linked-device sessions; credentials stay in the vault               |
 | GitHub                | Repository-scoped credentials; draft PR creation uses existing branches                                                     |
 | Stripe                | Balance and invoice reads only; no payment or money movement tools                                                          |
 | DAV / Jira / webhooks | Configured public HTTPS endpoints, credential isolation, and bounded operations                                             |

@@ -3,6 +3,7 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@whiskeysockets/baileys': false
   cpu-features: false
   esbuild: true
   protobufjs: false

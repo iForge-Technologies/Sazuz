@@ -28,6 +28,7 @@ import {
   type TelegramPairing,
   type TelegramReplyMarkup,
   TelegramError,
+  ChannelError,
 } from '@sazuz/channels';
 import { secretRedactor } from '@sazuz/vault';
 import { prioritizeNotification, type NotificationClassifier } from './calm.js';
@@ -79,7 +80,10 @@ export async function deliverOnce(
     return 'delivered';
   } catch (error) {
     const status =
-      error instanceof TelegramError && error.delivery === 'not_sent' ? 'failed' : 'uncertain';
+      (error instanceof TelegramError || error instanceof ChannelError) &&
+      error.delivery === 'not_sent'
+        ? 'failed'
+        : 'uncertain';
     await database.orm
       .update(deliveryIntents)
       .set({ status, updatedAt: new Date() })

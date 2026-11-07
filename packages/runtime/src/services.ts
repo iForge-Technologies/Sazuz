@@ -13,6 +13,7 @@ import { createMissionQueue } from './queue.js';
 import { createAutomationRunner, expireApprovals } from './automation.js';
 import { createNotificationRouter } from './notifications.js';
 import { createTelegramService } from './telegram.js';
+import { createChannelTool } from '@sazuz/channels';
 import { RunSuspension } from './contracts.js';
 import { agentActionPermission, createProviderAdmission } from '@sazuz/orchestrator';
 import { agentRoleSchema } from '@sazuz/core/agents';
@@ -30,6 +31,7 @@ import { createSandboxService, createSandboxTools } from '@sazuz/sandbox';
 import { createBrowserTools, workerBrowserTransport, workerBrowserImage } from '@sazuz/browser';
 import { mcpTools, selectedMcp, workerExternalDispatch } from '@sazuz/mcp';
 import { bridgeTools, selectedBridge } from '@sazuz/bridge';
+import { tickS2aSchedules } from './s2a-scheduler.js';
 
 export interface WorkerServiceOptions {
   database: Database;
@@ -136,7 +138,26 @@ export async function startWorkerServices(options: WorkerServiceOptions) {
         ...mcpTools(selected, agentId, dispatch),
         ...bridgeTools(await selectedBridge(database, runId, true), agentId, dispatch),
       ];
-      return { tools: dynamic, tainted: dynamic.length > 0 };
+      return {
+        tools: [
+          ...dynamic,
+          createChannelTool(async (ctx) => {
+            const current = await missionContext(database, ctx.runId);
+            if (current?.run.claimKey && current.run.workerId === workerId)
+              return broker.channel(
+                {
+                  runId: ctx.runId,
+                  claimKey: current.run.claimKey,
+                  scope: 'tool',
+                  executionId: ctx.idempotencyKey,
+                },
+                ctx.signal,
+              );
+            throw new RunSuspension('paused', 'The channel action has no execution scope.');
+          }),
+        ],
+        tainted: dynamic.length > 0,
+      };
     },
     ...(options.network ? { network: options.network } : {}),
     complete: enqueueExtraction,
@@ -314,6 +335,7 @@ export async function startWorkerServices(options: WorkerServiceOptions) {
   start('queue-recovery', 2000, queue.recover);
   start('knowledge', 1500, knowledge.tick);
   start('triggers', 1000, () => automation.tick());
+  start('s2a-schedules', 1000, () => tickS2aSchedules(database, getSettings));
   start('notifications', 1000, async () => {
     await expireApprovals(database);
     await notificationRouter.tick();

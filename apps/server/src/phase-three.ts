@@ -75,6 +75,7 @@ import { createBrowserTools } from '@sazuz/browser';
 import { BrowserError } from '@sazuz/core/browser';
 import { notificationFeedbackInputSchema } from '@sazuz/core/calm';
 import { saveNotificationFeedback, createProjectActivityTool } from '@sazuz/runtime';
+import { registerIntegrations } from './integrations.js';
 
 export function createPhaseThreeServices(
   runtime: PhaseOne,
@@ -118,6 +119,7 @@ export function registerPhaseThree(
     parseRequest(emptyRequest, request.query);
     return connectorCatalogue();
   });
+  registerIntegrations(app, runtime, services, overrides);
 
   // Phase One's shared hook requires loopback plus the private operator credential.
   app.get('/api/operator/control', async (request) => {

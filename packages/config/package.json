@@ -7,7 +7,8 @@
     "./private-files": "./src/private-files.ts",
     ".": "./src/index.ts",
     "./settings": "./src/settings.ts",
-    "./contracts": "./src/contracts.ts"
+    "./contracts": "./src/contracts.ts",
+    "./integrations": "./src/integrations.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -1,4 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
@@ -7,6 +8,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
   approvals,
+  channelInbox,
+  channelSessions,
   createMission,
   createProject,
   executionNonces,
@@ -19,6 +22,7 @@ import {
   readSettings,
   recordHeartbeat,
   runs,
+  runSteps,
   saveSetting,
   scheduleReviews,
   secrets,
@@ -44,6 +48,15 @@ import {
   triggerSchema,
 } from '@sazuz/core/missions';
 import { projectSchema } from '@sazuz/core/work';
+import { s2aRecordSchema } from '@sazuz/core/s2a';
+import { channelConnectionSchema, mcpConnectionSchema } from '@sazuz/config/integrations';
+import { mcpToolName } from '../../packages/mcp/src/connections.js';
+import {
+  ensureAgents,
+  getAgent,
+  pinAgent,
+  saveAgent,
+} from '../../packages/orchestrator/src/index.js';
 import {
   consumeExecutionSecret,
   makeExecutionRequest,
@@ -80,6 +93,7 @@ describe('Phase 3 authenticated APIs and execution boundary against PostgreSQL',
   let clientRef: SecretReference;
   let workspaceId: string;
   let oauthRequests = 0;
+  const channelDeliveries: string[] = [];
   const cookies = new Map<string, string>();
   const origin = 'http://localhost:7777';
   const vaultPassphrase = 'api-vault-passphrase-570293';
@@ -116,6 +130,11 @@ describe('Phase 3 authenticated APIs and execution boundary against PostgreSQL',
   };
   const fakeFetch: typeof fetch = (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
+    if (url.toString() === 'https://slack.com/api/chat.postMessage') {
+      const body = z.object({ text: z.string() }).parse(JSON.parse(z.string().parse(init?.body)));
+      channelDeliveries.push(body.text);
+      return Promise.resolve(Response.json({ ok: true, channel: 'CFIXTURE', ts: '12345.6790' }));
+    }
     if (url.toString() !== 'https://oauth2.googleapis.com/token')
       throw new Error('Unexpected fixture endpoint.');
     oauthRequests++;
@@ -1216,5 +1235,311 @@ describe('Phase 3 authenticated APIs and execution boundary against PostgreSQL',
     expect(fixture.logLines.join('')).not.toContain(providerValue);
     expect(fixture.logLines.join('')).not.toContain(clientValue);
     expect(fixture.logLines.join('')).not.toContain(refreshValue);
+  });
+
+  it('protects integration settings and validates S2A publishing and submission', async () => {
+    for (const url of ['/api/s2a', '/api/mcp/connections', '/api/channels/connections'])
+      expect((await request('GET', url, undefined, false)).statusCode).toBe(401);
+    const body = {
+      projectId,
+      name: 'S2A API fixture',
+      graph: {
+        entry: 'start',
+        nodes: [{ id: 'start', name: 'Value', kind: 'value', value: 'Hello', next: null }],
+      },
+    };
+    expect(
+      (
+        await request('POST', '/api/s2a', {
+          ...body,
+          graph: { entry: 'missing', nodes: body.graph.nodes },
+        })
+      ).statusCode,
+    ).toBe(400);
+    const response = await request('POST', '/api/s2a', body);
+    expect(response.statusCode, response.body).toBe(200);
+    const workflow = s2aRecordSchema.parse(response.json());
+    const submission = { requestId: randomUUID(), revision: 1, input: {} };
+    expect((await request('POST', `/api/s2a/${workflow.id}/run`, submission)).statusCode).toBe(409);
+    expect(
+      (await request('POST', `/api/s2a/${workflow.id}/publish`, { revision: 1 })).statusCode,
+    ).toBe(200);
+    const first = await request('POST', `/api/s2a/${workflow.id}/run`, submission);
+    const second = await request('POST', `/api/s2a/${workflow.id}/run`, submission);
+    expect(first.statusCode, first.body).toBe(200);
+    expect(missionSchema.parse(second.json()).id).toBe(missionSchema.parse(first.json()).id);
+    expect(
+      (
+        await request('PUT', `/api/s2a/${workflow.id}`, {
+          name: 'Stale',
+          graph: body.graph,
+          expectedRevision: 4,
+        })
+      ).statusCode,
+    ).toBe(409);
+  });
+
+  it('persists MCP connections without disclosing tokens and rejects stale writes', async () => {
+    const before = z
+      .object({ version: z.number() })
+      .parse((await request('GET', '/api/mcp/connections')).json());
+    const connection = mcpConnectionSchema.parse({
+      id: 'api_fixture',
+      name: 'Fixture MCP',
+      url: 'https://example.com/mcp',
+      secretRef: providerRef,
+    });
+    const saved = await request('PUT', '/api/mcp/connections', {
+      version: before.version,
+      connections: [connection],
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(saved.body).not.toContain(providerValue);
+    expect(
+      (await request('PUT', '/api/mcp/connections', { version: before.version, connections: [] }))
+        .statusCode,
+    ).toBe(409);
+  });
+
+  it('scopes MCP credential access to reviewed tools and current agent permissions', async () => {
+    await recordHeartbeat(fixture.database, workerId);
+    const before = (await readSettings(fixture.database)).advanced;
+    const connection = mcpConnectionSchema.parse({
+      id: 'credential_fixture',
+      name: 'Credential scope',
+      url: 'https://example.com/mcp',
+      enabled: true,
+      secretRef: providerRef,
+      agents: ['comms'],
+      tools: [
+        {
+          name: 'lookup',
+          description: 'Lookup fixture',
+          enabled: true,
+          effect: 'read',
+          inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+        },
+      ],
+    });
+    await saveSetting(fixture.database, {
+      namespace: 'advanced',
+      actorId: userId,
+      expectedVersion: before.version,
+      value: { ...before.value, mcp: [connection] },
+    });
+    await ensureAgents(fixture.database, userId);
+    const agent = await getAgent(fixture.database, userId, 'comms');
+    await saveAgent(
+      fixture.database,
+      userId,
+      'comms',
+      {
+        expectedVersion: agent.version,
+        definition: { ...agent.definition, tools: [...agent.definition.tools, 'mcp_connection.*'] },
+      },
+      runtime.settings.connectors.value.accounts,
+    );
+    const pending = await pendingAction({ active: true });
+    await pinAgent(
+      fixture.database,
+      userId,
+      pending.mission.run.id,
+      'comms',
+      runtime.settings.connectors.value.accounts,
+    );
+    const call = { id: 'mcp-fixture-call', name: mcpToolName(connection.id, 'lookup'), args: {} };
+    await fixture.database.orm
+      .update(runs)
+      .set({
+        checkpoint: {
+          ...pending.checkpoint,
+          loop: { ...pending.checkpoint.loop, status: 'running', pendingCalls: [call] },
+        },
+      })
+      .where(eq(runs.id, pending.mission.run.id));
+    await fixture.database.orm.insert(toolCalls).values({
+      id: workKey('call'),
+      runId: pending.mission.run.id,
+      idempotencyKey: pending.callKey,
+      toolName: call.name,
+      args: {},
+      argsHash: valueHash({}),
+      effect: 'read',
+      status: 'intent',
+    });
+    const scope = {
+      runId: pending.mission.run.id,
+      claimKey: pending.claimKey,
+      scope: 'tool' as const,
+      executionId: pending.callKey,
+      reference: providerRef,
+    };
+    const signed = execution(scope);
+    const granted = await broker(signed);
+    expect(granted.statusCode, granted.body).toBe(200);
+    expect(granted.body).not.toContain(providerValue);
+    expect(
+      await consumeExecutionSecret(
+        runtime.plumbing.operatorKey,
+        signed.request,
+        granted.json(),
+        (secret) => Promise.resolve(secret === providerValue),
+      ),
+    ).toBe(true);
+    expect((await broker(execution({ ...scope, reference: emailRef }))).statusCode).toBe(403);
+    const current = await getAgent(fixture.database, userId, 'comms');
+    await saveAgent(
+      fixture.database,
+      userId,
+      'comms',
+      {
+        expectedVersion: current.version,
+        definition: agent.definition,
+      },
+      runtime.settings.connectors.value.accounts,
+    );
+    expect((await broker(execution(scope))).statusCode).toBe(403);
+  });
+
+  it('verifies signed channel ingress and deduplicates messages before mission creation', async () => {
+    const signingValue = `slack-signing-${randomUUID()}`;
+    const signing = await runtime.vault.create({
+      name: 'Channel signing fixture',
+      value: signingValue,
+      createdBy: userId,
+    });
+    const before = z
+      .object({ version: z.number() })
+      .parse((await request('GET', '/api/channels/connections')).json());
+    const connection = channelConnectionSchema.parse({
+      id: 'slack_fixture',
+      name: 'Slack fixture',
+      kind: 'slack',
+      projectId,
+      enabled: true,
+      applicationId: 'AFIXTURE',
+      secretRef: telegramRef,
+      signingSecretRef: signing.reference,
+      allowedSenders: ['UFIXTURE'],
+      allowedConversations: ['CFIXTURE'],
+    });
+    const saved = await request('PUT', '/api/channels/connections', {
+      version: before.version,
+      connections: [connection],
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    await vi.waitFor(() => expect(runtime.settings.channels.value.connections).toHaveLength(1));
+    const payload = JSON.stringify({
+      type: 'event_callback',
+      api_app_id: 'AFIXTURE',
+      event_id: 'phase3b-event',
+      event: {
+        type: 'app_mention',
+        user: 'UFIXTURE',
+        channel: 'CFIXTURE',
+        text: 'Summarize this fixture',
+        ts: '12345.6789',
+      },
+    });
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const signature = `v0=${createHmac('sha256', signingValue).update(`v0:${timestamp}:`).update(payload).digest('hex')}`;
+    const submit = (signed: boolean) =>
+      app.inject({
+        method: 'POST',
+        url: '/channels/hooks/slack_fixture',
+        headers: {
+          'content-type': 'application/json',
+          ...(signed
+            ? { 'x-slack-request-timestamp': timestamp, 'x-slack-signature': signature }
+            : {}),
+        },
+        payload,
+      });
+    expect((await submit(false)).statusCode).toBe(401);
+    expect((await submit(true)).statusCode).toBe(200);
+    expect((await submit(true)).statusCode).toBe(200);
+    const count = await fixture.database.pool.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM missions WHERE source='channel:slack_fixture'",
+    );
+    expect(count.rows[0]?.count).toBe(1);
+    const [parent] = await fixture.database.orm
+      .select({ run: runs })
+      .from(channelInbox)
+      .innerJoin(runs, eq(runs.missionId, channelInbox.missionId))
+      .where(eq(channelInbox.connectionId, 'slack_fixture'));
+    expect(parent).toBeDefined();
+    const childId = workKey('run');
+    await fixture.database.orm.insert(runs).values({
+      ...parent!.run,
+      id: childId,
+      parentRunId: parent!.run.id,
+      agentId: 'researcher',
+      status: 'completed',
+    });
+    await fixture.database.orm.insert(runSteps).values({
+      id: workKey('step'),
+      runId: childId,
+      eventKey: 'channel-child-result',
+      ordinal: 1,
+      agentId: 'researcher',
+      kind: 'assistant',
+      content: 'Intermediate specialist result',
+    });
+    // A specialist finishing must not consume the root mission's reply receipt.
+    await delay(1800);
+    expect(channelDeliveries).toEqual([]);
+    await fixture.database.orm.insert(runSteps).values({
+      id: workKey('step'),
+      runId: parent!.run.id,
+      eventKey: 'channel-root-result',
+      ordinal: 1,
+      agentId: 'cos',
+      kind: 'assistant',
+      content: 'Final combined result',
+    });
+    await fixture.database.orm
+      .update(runs)
+      .set({ status: 'completed' })
+      .where(eq(runs.id, parent!.run.id));
+    await vi.waitFor(() => expect(channelDeliveries).toHaveLength(1), { timeout: 5000 });
+    expect(channelDeliveries[0]).toContain('Final combined result');
+    expect(channelDeliveries[0]).not.toContain('Intermediate specialist result');
+    expect(fixture.logLines.join('')).not.toContain(signingValue);
+  });
+
+  it('unlinks only the exact QR connection, preserving IDs that would match SQL wildcards', async () => {
+    const own = await runtime.vault.create({
+      name: 'QR cleanup fixture',
+      value: 'fixture-auth-one',
+      createdBy: userId,
+    });
+    const other = await runtime.vault.create({
+      name: 'Other QR fixture',
+      value: 'fixture-auth-two',
+      createdBy: userId,
+    });
+    await fixture.database.orm.insert(channelSessions).values([
+      { connectionId: 'qr_one:credentials', secretRef: own.reference, revision: own.revision },
+      { connectionId: 'qr_one:orphan', secretRef: `secret://${workKey('sec')}`, revision: 1 },
+      { connectionId: 'qrxone:credentials', secretRef: other.reference, revision: other.revision },
+    ]);
+    const result = await request('POST', '/api/channels/qr_one/disconnect', {});
+    expect(result.statusCode, result.body).toBe(200);
+    expect(
+      await fixture.database.orm
+        .select()
+        .from(channelSessions)
+        .where(eq(channelSessions.connectionId, 'qr_one:credentials')),
+    ).toHaveLength(0);
+    expect(
+      await fixture.database.orm
+        .select()
+        .from(channelSessions)
+        .where(eq(channelSessions.connectionId, 'qrxone:credentials')),
+    ).toHaveLength(1);
+    await fixture.database.orm
+      .delete(channelSessions)
+      .where(eq(channelSessions.connectionId, 'qrxone:credentials'));
+    await runtime.vault.delete(other.id);
   });
 });

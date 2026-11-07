@@ -14,3 +14,4 @@ export * from './observability.js';
 export * from './audit.js';
 export * from './maintenance.js';
 export * from './restore-listener.js';
+export * from './s2a.js';

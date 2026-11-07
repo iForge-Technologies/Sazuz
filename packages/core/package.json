@@ -33,7 +33,8 @@
     "./workflows": "./src/workflows.ts",
     "./calm": "./src/calm.ts",
     "./learning": "./src/learning.ts",
-    "./learning-replay": "./src/learning-replay.ts"
+    "./learning-replay": "./src/learning-replay.ts",
+    "./s2a": "./src/s2a.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -18,6 +18,7 @@
       'gmail.*',
       'email.*',
       'calendar.*',
+      'channel.*',
     ],
   'permissions': { 'preset': 'inherit', 'deny': [] },
   'memory': { 'read': ['global', 'project', 'agent'], 'write': 'proposals' },

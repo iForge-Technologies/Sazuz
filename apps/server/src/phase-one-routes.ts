@@ -83,6 +83,8 @@ export function registerPhaseOne(app: Awaited<ReturnType<typeof createApp>>, run
       request.url !== '/internal/browser-image' &&
       request.url !== '/internal/external-execution' &&
       request.url !== '/mcp' &&
+      request.url !== '/internal/channel-send' &&
+      !/^\/channels\/hooks\/[a-z][a-z0-9_-]{0,39}$/.test(request.url) &&
       !/^\/hooks\/[a-z]+_[0-9A-HJKMNP-TV-Z]{26}$/.test(request.url)
     )
       runtime.verifyOrigin(request);
